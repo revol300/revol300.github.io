@@ -3,7 +3,7 @@ layout: default
 ---
 <ul class="posts-list">
   
-  {% assign category = page.category | default: page.title %}
+  {% assign category = page.category | default: page.title | sort %}
   {% for post in site.categories[category] %}
     <li>
       <h3>
