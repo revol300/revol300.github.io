@@ -9,7 +9,7 @@ permalink: /category
 <div id="post-list">
   <h2 class="title is-2">"{{ esc_ctgname }}" 카테고리에 있는 글</h2>
   <ul>
-    <li v-for="p in posts" v-if="p.categories.indexOf(hash) != -1">
+    <li v-for="p in posts" v-if="p.category.indexOf(hash) != -1">
       <a v-bind:href="p.url">{{ esc_title }}</a> <small>{{ esc_date }}</small>
     </li>
   </ul>
