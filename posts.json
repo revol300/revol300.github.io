@@ -8,7 +8,7 @@
     {
       "title": "{{ post.title }}",
       "date": "{{ post.date | date: "%Y-%m-%d"}}",
-      "category": {{ post.category | jsonify }},
+      "categories": {{ post.categories | jsonify }},
       "url": "{{ post.url }}"
     }
     {% unless forloop.last %},{% endunless %}
