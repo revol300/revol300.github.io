@@ -23,7 +23,7 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://revol300.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: 
 github_username:  revol300
-category_dir: caategory/
+category_dir: category/
 tag_dir: tag/
 
 # Build settings
