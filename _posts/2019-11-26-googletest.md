@@ -13,3 +13,9 @@ About googletest
 |   |   |   |   |   |
 |   |   |   |   |   |
 |   |   |   |   |   |
+
+```c
+int main() {
+	int y =1;
+	int x =2;
+}
