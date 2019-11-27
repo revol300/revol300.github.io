@@ -1,4 +1,4 @@
----
+--
 layout: post
 title:  "googletest_1"
 comments: true
@@ -12,27 +12,27 @@ categories: cpp
 
 1. 테스트는 독립적이고 반복 가능해야한다. 다른 테스트의 결과에 따라 그 값이 달라지는 테스트는 디버깅하기 곤란하다. => googletest는 test를 다른 object에서 돌아가도록 함으로써 test를 격리한다. googletest를 이용하면 실패한 test를 독립적으로 돌려서 빠른 디버깅이 가능하다.
 
-2. test는 잘 구성되어야하며 테스트하려는 코드의 구조를 반영해야한다. => googletest는 연관 테스트를 데이터와 서브 루틴 공유가 가능한 묶음으로 그룹화한다. 이 패턴은 알아보기 쉽고 test를 유지하기에 용이하다. 특히 프로젝트를 전환하면서 새로운 code를 기반으로 시작할때 이런 일관성이 큰 도움이 된다.
+2. test는 잘 구성 되어야하며 테스트하려는 코드의 구조를 반영해야한다. => googletest는 연관 테스트를 데이터와 서브 루틴 공유가 가능한 묶음으로 그룹화한다. 이 패턴은 알아보기 쉽고 test를 유지하기에 용이하다. 특히 프로젝트를 전환하면서 새로운 code를 기반으로 시작할 때 이런 일관성이 큰 도움이 된다.
 
-3. 테스트는 이식 가능하고 재사용 가능해아한다. google에는 플랫폼 독립적인 코드가 많이 있으며 이들의 테스트 또한 플랫폼 독립적이어야 한다. googletest는 예외가 있거나 없는 다른 컴파일러와 함께 다른 OS에서 작동하므로 googletest 테스트는 다양한 구성에서 작동 할 수 있습니다.
+3. 테스트는 이식 가능하고 재사용 가능해야 한다. google에는 플랫폼 독립적인 코드가 많이 있으며 이들의 테스트 또한 플랫폼 독립적이어야 한다. googletest는 예외가 있거나 없는 다른 컴파일러와 함께 다른 OS에서 작동하므로 googletest 테스트는 다양한 구성에서 작동 할 수 있습니다.
 
-4. 테스트가 실패하면 이와 관련된 가능한한 많은 정보를 제공해야한다.  googletest는 첫번째 test가 실패하더라도 다음 테스트로 넘어간다. non-fatal failure에 대해 report를 받고 . 따라서 한번 의 실행으로 여러 버그들을 찾고 고칠수 있다.
+4. 테스트가 실패하면 이와 관련된 가능한 한 많은 정보를 제공해야한다. googletest는 첫번째 test가 실패하더라도 non-fatal failure에 대해 로그를 남기고 다음 테스트로 넘어간다. 따라서 한번 의 실행으로 여러 버그들을 찾고 고칠수 있다.
 
-5.  테스트 프레임워크는 테스트 작성자가 오직 테스트 내용에만 집중할 수있게 도와야한다. googletest는 사용자가 정의한 모든 테스트를 추적하여 사용자가 실행순서를 열거할 필요 없이 알아서 실행시킨다.
+5.  테스트 프레임워크는 테스트 작성자가 오직 테스트 내용에만 집중할 수 있게 두어야한다. googletest는 사용자가 정의한 모든 테스트를 추적하여 사용자가 실행 순서를 열거할 필요 없이 알아서 실행시킨다.
 
-6. 테스트는 빨라야 한다. googletest를 쓰면 test를 할때마다 shared resource를 재사용할 수 있다. 자원과 관련된 부분은 오직 set-up/tear-down과정 뿐이다.
+6. 테스트는 빨라야 한다. googletest를 쓰면 test를 할 때마다 shared resource를 재사용할 수 있다. 자원과 관련된 부분은 오직 set-up/tear-down과정 뿐이다.
 
-구글 테스트는 xUnit architecture에 기반했기 때문에 JUnit PyUnit 등등을 사용해 봣다면 금방 쓸 수 있다.
+구글 테스트는 xUnit architecture에 기반했기 때문에 JUnit PyUnit 등등을 사용해 봤다면 금방 쓸 수 있다.
 
 ## Basic Concepts
 
-test program은 하나 이상의 test suite로 이루어져 있고 test suite 또한 하나  이상의 test로 이루어져 있다. test는 assertion을 이용해서 test code의 동작 결과를 확인한다. assertion은 조건문이 treu인지 확인하는데, assertion의 결과는 success, fatal failure, non-fatal failure로 구분된다. fatal failure의 경우 현재 function을 중단하며 이외의 경우 프로그램이 정상작동한다. 
+test program은 하나 이상의 test suite로 이루어져 있고 test suite 또한 하나 이상의 test로 이루어져 있다. test는 assertion을 이용해서 test code의 동작 결과를 확인한다. assertion은 조건문이 true인지 확인하는데, assertion의 결과는 success, fatal failure, non-fatal failure로 구분된다. fatal failure의 경우 현재 function을 중단하며 이외의 경우 프로그램이 정상작동한다. 
 
-만약 test suite의 여러 테스트가 object나 subroutine을 공유해아 한다면 이들을 test fixture class에 넣자
+만약 test suite의 여러 테스트가 object나 subroutine을 공유해야 한다면 이들을 test fixture class에 넣자
 
 ## Assertion
 
-assertion은 function에 서로 다른 영향을 주는 두개의 버전으로 제공이 된다. ASSERT_\* 버전은 fail하면 fatal failure를 생성하며 현재 function을 중단한다. EXPECT_\* 버전은 non-fatal failure를 생성하며 현재 function을 중단하지 않는다. 보통 EXPECT_\*가 더많은 수의 test를 진행할 수 있기때문에 선호된다. 다만 더이상의 진행이 의미가 없다고 판단 될 경우 ASSERT_\*를 사용하자. failure에 대해서 로그를 남기고 싶다면 << 를 사용하자.
+assertion은 function에 서로 다른 영향을 주는 두개의 버전으로 제공이 된다. ASSERT_\* 버전은 fail하면 fatal failure를 생성하며 현재 function을 중단한다. EXPECT_\* 버전은 non-fatal failure를 생성하며 현재 function을 중단하지 않는다. 보통 EXPECT_\*가 더 많은 수의 test를 진행할 수 있기때문에 선호된다. 다만 더 이상의 진행이 의미가 없다고 판단 될 경우 ASSERT_\*를 사용하자. failure에 대해서 로그를 남기고 싶다면 << 를 사용하자.
 ex.)
 
 ```c++
@@ -50,7 +50,7 @@ Fatal assertion            | Nonfatal assertion         | Verifies
 `ASSERT_TRUE(condition);`  | `EXPECT_TRUE(condition);`  | `condition` is true
 `ASSERT_FALSE(condition);` | `EXPECT_FALSE(condition);` | `condition` is false
 
-한편 Basic Assertion을 이용하는 것보다는 각 타입에 맞는 assertion을 사용하자. ASSERT_TRUE(a==b) 보다는 ASSERT_EQ(a,b) 에서 실패했을 시 a!=b임을 알고 이를 출력해주기 때문이다. ASSER_TRUE 는 어떤 condition을 사용하는지에 대해서는 상세히 알지 못한다.
+한편 Basic Assertion을 이용하는 것보다는 각 타입에 맞는 assertion을 사용하자. ASSERT_TRUE(a==b) 보다는 ASSERT_EQ(a,b) 에서 실패했을 시 a!=b임을 알고 이를 출력 해주기 때문이다. ASSER_TRUE 는 어떤 condition을 사용하는지에 대해서는 상세히 알지 못한다.
 
 ### Binary Comparison
 
@@ -67,7 +67,7 @@ Argument의 경우에는 딱 한번만 실행되기 때문에 argument 가 side 
 
 ### String Comparison
 
-**이 assertion은 C string을 위해 사용된다. string object를 비교하고 십다면 EXPECT_EQU 이나 EXPECT_NE등을 사용하자**
+**이 assertion은 C string을 위해 사용된다. string object를 비교하고 싶다면 EXPECT_EQU 이나 EXPECT_NE등을 사용하자**
 
 | Fatal assertion                | Nonfatal assertion             | Verifies                                                 |
 | --------------------------     | ------------------------------ | -------------------------------------------------------- |
@@ -76,7 +76,7 @@ Argument의 경우에는 딱 한번만 실행되기 때문에 argument 가 side 
 | `ASSERT_STRCASEEQ(str1,str2);` | `EXPECT_STRCASEEQ(str1,str2);` | the two C strings have the same content, ignoring case   |
 | `ASSERT_STRCASENE(str1,str2);` | `EXPECT_STRCASENE(str1,str2);` | the two C strings have different contents, ignoring case |
 
-NULL popinter 와 빈 string은 다르게 취급된다.
+NULL pointer 와 빈 string은 다르게 취급된다.
 
 ## Simple Tests
 
@@ -94,11 +94,11 @@ TEST(TestSuiteName, TestName) {
 }
 ```
 
-TEST에서 첫번째 argument는 test suite의 이름이고 두번째 argument는 test의 이름을 의미한다. test의 전체 이름은 이 둘을 다 폼한다. 
+TEST에서 첫번째 argument는 test suite의 이름이고 두번째 argument는 test의 이름을 의미한다. test의 전체 이름은 이 둘을 다 포함한다. 
 
 ## Test Fixtures :  같은 데이터를 여러 테스트 에서 써보자
 
-1. ::testing::Test로 부터 class 를 상속 받는다. fixture의 멤버에는 sub-class로 접근 하는걸 원하기 때문에, body는 protected: 로 시작한다.
+1. ::testing::Test로부터 class 를 상속 받는다. fixture의 멤버에는 sub-class로 접근 하는걸 원하기 때문에, body는 protected: 로 시작한다.
 
 2. class 안에는 쓰고 싶은 object를 선언한다.
 
@@ -138,7 +138,7 @@ RUN_ALL_TESTS() 매크로를 호출 하면:
 
 *   모든 googletest flag를 복구한다.
 
-*   모든 테스트가 수행 될때까지 이를 반복한다.
+*   모든 테스트가 수행 될 때까지 이를 반복한다.
 
 > 중요: ** RUN_ALL_TESTS()의 return 값을 무시하면 안된다. **
 > exit code에 dependent하게 디자인 되었으므로, main()은 반드시 RUN_ALL_TESTS의 값을 return 해야 한다.
@@ -158,8 +158,8 @@ int main(int argc, char **argv) {
 }
 ```
 
-::testing::InitGoogleTest() 함수는 command line에서 googletest flag를 받는데 이를 통해서 사용자가 test program의 행동을 컨트롤 할 수 있다. RUN_ALL_TESTS() 전에 이를 반드시 호출해야하며 그렇제 않으면 flag의 초기화가 제대로 진행되지 않는다. 
+::testing::InitGoogleTest() 함수는 command line에서 googletest flag를 받는데 이를 통해서 사용자가 test program의 행동을 컨트롤 할 수 있다. RUN_ALL_TESTS() 전에 이를 반드시 호출해야 하며 그렇지 않으면 flag의 초기화가 제대로 진행되지 않는다. 
 
 
 ## Known Limitations
-googletest는 thread-safe로 디자인 되어 있다. 다만 이는 pthreads 라이브러리에서는 그런 것이며 지금(2019/11/27)은 아직 다른 시스템에 대해서는 unsafe하다. 물론 테스트가 보통 main thread에서 일어나기에 문제는 없다. 
+googletest는 thread-safe로 디자인 되어 있다. 다만 이는 pthreads 라이브러리에서는 그런 것이며 지금(2019/11/27)은 아직 다른 시스템에 대해서는 unsafe하다. 물론 테스트가 보통 main thread에서 일어나기에 문제는 없다.
