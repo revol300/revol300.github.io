@@ -65,16 +65,12 @@ Argument의 경우에는 딱 한번만 실행되기 때문에 argument 가 side 
 
 **이 assertion은 C string을 위해 사용된다. string object를 비교하고 십다면 EXPECT_EQU 이나 EXPECT_NE등을 사용하자**
 
-<!-- mdformat off(github rendering does not support multiline tables) -->
-
 | Fatal assertion                | Nonfatal assertion             | Verifies                                                 |
 | --------------------------     | ------------------------------ | -------------------------------------------------------- |
 | `ASSERT_STREQ(str1,str2);`     | `EXPECT_STREQ(str1,str2);`     | the two C strings have the same content            |
 | `ASSERT_STRNE(str1,str2);`     | `EXPECT_STRNE(str1,str2);`     | the two C strings have different contents          |
 | `ASSERT_STRCASEEQ(str1,str2);` | `EXPECT_STRCASEEQ(str1,str2);` | the two C strings have the same content, ignoring case   |
 | `ASSERT_STRCASENE(str1,str2);` | `EXPECT_STRCASENE(str1,str2);` | the two C strings have different contents, ignoring case |
-
-<!-- mdformat on-->
 
 NULL popinter 와 빈 string은 다르게 취급된다.
 
