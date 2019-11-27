@@ -28,11 +28,11 @@ categories: cpp
 
 test program은 하나 이상의 test suite로 이루어져 있고 test suite 또한 하나  이상의 test로 이루어져 있다. test는 assertion을 이용해서 test code의 동작 결과를 확인한다. assertion은 조건문이 treu인지 확인하는데, assertion의 결과는 success, fatal failure, non-fatal failure로 구분된다. fatal failure의 경우 현재 function을 중단하며 이외의 경우 프로그램이 정상작동한다. 
 
-*만약 test suite의 여러 테스트가 object나 subroutine을 공유해아 한다면 이들을 test fixture class에 넣자
+만약 test suite의 여러 테스트가 object나 subroutine을 공유해아 한다면 이들을 test fixture class에 넣자
 
 ## Assertion
 
-assertion은 function에 서로 다른 영향을 주는 두개의 버전으로 제공이 된다. ASSERT_* 버전은 fail하면 fatal failure를 생성하며 현재 function을 중단한다. EXPECT_* 버전은 non-fatal failure를 생성하며 현재 function을 중단하지 않는다. 보통 EXPECT_*가 더많은 수의 test를 진행할 수 있기때문에 선호된다. 다만 더이상의 진행이 의미가 없다고 판단 될 경우 ASSERT_*를 사용하자. failure에 대해서 로그를 남기고 싶다면 << 를 사용하자.
+assertion은 function에 서로 다른 영향을 주는 두개의 버전으로 제공이 된다. ASSERT_\* 버전은 fail하면 fatal failure를 생성하며 현재 function을 중단한다. EXPECT_\* 버전은 non-fatal failure를 생성하며 현재 function을 중단하지 않는다. 보통 EXPECT_\*가 더많은 수의 test를 진행할 수 있기때문에 선호된다. 다만 더이상의 진행이 의미가 없다고 판단 될 경우 ASSERT_\*를 사용하자. failure에 대해서 로그를 남기고 싶다면 << 를 사용하자.
 ex.)
 
 ```c++
@@ -63,7 +63,7 @@ Fatal assertion          | Nonfatal assertion       | Verifies
 `ASSERT_GT(val1, val2);` | `EXPECT_GT(val1, val2);` | `val1 > val2`
 `ASSERT_GE(val1, val2);` | `EXPECT_GE(val1, val2);` | `val1 >= val2`
 
-Argument의 경우에는 딱 한번만 실행되기 때문에 argument 가 side effect를 가지더라도 문제 없다. 다만 일반적으로 C/C++ 함수 특징상 argument의 연산 순서를 명확히 알 수 없기 때문에 이를 유의해서 작성해야 한다. 한편 ASSERT_EQ()는 pointer에 대해서는 pointer의 equality를 따지기 때문에 C string을 사용한다면 string의 비교가 아닌 string의 memory location에 대해서 비교를 하게 된다.  따라서 ASSERT_STREQ() 의 사용이 권장된다. 다만 pointer에 대한 비교이 이므로 두개의 string object를 비교할 때는 ASSERT_EQ 사용하자. 한편 pointer 비교를 할 때에는 *_EQ(ptr, nullptr), *_NE(ptr, nullptr)을 *_EQ(ptr, NULL), *_NE(ptr, NULL) 대신 사용하자. nullptr는 pointer 타입이지만 NULL은 아니기 때문이다.
+Argument의 경우에는 딱 한번만 실행되기 때문에 argument 가 side effect를 가지더라도 문제 없다. 다만 일반적으로 C/C++ 함수 특징상 argument의 연산 순서를 명확히 알 수 없기 때문에 이를 유의해서 작성해야 한다. 한편 ASSERT_EQ()는 pointer에 대해서는 pointer의 equality를 따지기 때문에 C string을 사용한다면 string의 비교가 아닌 string의 memory location에 대해서 비교를 하게 된다.  따라서 ASSERT_STREQ() 의 사용이 권장된다. 다만 pointer에 대한 비교이 이므로 두개의 string object를 비교할 때는 ASSERT_EQ 사용하자. 한편 pointer 비교를 할 때에는 \*\_EQ(ptr, nullptr), \*\_NE(ptr, nullptr)을 \*\_EQ(ptr, NULL), \*\_NE(ptr, NULL) 대신 사용하자. nullptr는 pointer 타입이지만 NULL은 아니기 때문이다.
 
 ### String Comparison
 
