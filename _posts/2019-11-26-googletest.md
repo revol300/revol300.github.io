@@ -6,7 +6,9 @@ date:   2019-11-26
 categories: cpp 
 ---
 
-About googletest
+# Googletest Primer
+
+## Introduction: Why googletest?
 
 1. 테스트는 독립적이고 반복 가능해야한다. 다른 테스트의 결과에 따라 그 값이 달라지는 테스트는 디버깅하기 곤란하다. => googletest는 test를 다른 object에서 돌아가도록 함으로써 test를 격리한다. googletest를 이용하면 실패한 test를 독립적으로 돌려서 빠른 디버깅이 가능하다.
 
@@ -22,12 +24,14 @@ About googletest
 
 구글 테스트는 xUnit architecture에 기반했기 때문에 JUnit PyUnit 등등을 사용해 봣다면 금방 쓸 수 있다.
 
-구조
+## Basic Concepts
+
 test program은 하나 이상의 test suite로 이루어져 있고 test suite 또한 하나  이상의 test로 이루어져 있다. test는 assertion을 이용해서 test code의 동작 결과를 확인한다. assertion은 조건문이 treu인지 확인하는데, assertion의 결과는 success, fatal failure, non-fatal failure로 구분된다. fatal failure의 경우 현재 function을 중단하며 이외의 경우 프로그램이 정상작동한다. 
 
 *만약 test suite의 여러 테스트가 object나 subroutine을 공유해아 한다면 이들을 test fixture class에 넣자
 
-Assertion
+## Assertion
+
 assertion은 function에 서로 다른 영향을 주는 두개의 버전으로 제공이 된다. ASSERT_* 버전은 fail하면 fatal failure를 생성하며 현재 function을 중단한다. EXPECT_* 버전은 non-fatal failure를 생성하며 현재 function을 중단하지 않는다. 보통 EXPECT_*가 더많은 수의 test를 진행할 수 있기때문에 선호된다. 다만 더이상의 진행이 의미가 없다고 판단 될 경우 ASSERT_*를 사용하자. failure에 대해서 로그를 남기고 싶다면 << 를 사용하자.
 ex.)
 
@@ -74,7 +78,7 @@ Argument의 경우에는 딱 한번만 실행되기 때문에 argument 가 side 
 
 NULL popinter 와 빈 string은 다르게 취급된다.
 
-### Simple Tests
+## Simple Tests
 
 이제 test를 한번 만들어 보자
 
@@ -92,7 +96,7 @@ TEST(TestSuiteName, TestName) {
 
 TEST에서 첫번째 argument는 test suite의 이름이고 두번째 argument는 test의 이름을 의미한다. test의 전체 이름은 이 둘을 다 폼한다. 
 
-### Test Fixtures :  같은 데이터를 여러 테스트 에서 써보자
+## Test Fixtures :  같은 데이터를 여러 테스트 에서 써보자
 
 1. ::testing::Test로 부터 class 를 상속 받는다. fixture의 멤버에는 sub-class로 접근 하는걸 원하기 때문에, body는 protected: 로 시작한다.
 
@@ -114,7 +118,7 @@ TEST_F(TestFixtureName, TestName) {
 
 TEST() 처럼 첫번째 argument는 test suite name 이지만 TEST_F() 는 이것을 반드시 test fixture class의 이름으로 설정해야 한다. 또한 TEST_F()에서 사용하는 fixture class에 대한 정의는 반드시 TEST_F() 이전에 작성되어야 한다.
 
-### Invoking the Tests
+## Invoking the Tests
 
 TEST()와 TEST_F()가 google test에 등록되기 때문에, 정의하고 그냥 RUN_ALL_TESTS()를 호출하면 test가 실행된다. 전부 성공하면 0을 return 하고 아닐 경우 1을 return 한다.
 
@@ -143,7 +147,7 @@ RUN_ALL_TESTS() 매크로를 호출 하면:
  once conflicts with some advanced googletest features (e.g., thread-safe
  [death tests](advanced.md#death-tests)) and thus is not supported.
 
-### Writing the main() Function
+## Writing the main() Function
 
 아마 대부분의 사용자는 main function을 사용하는 것보다는 test를 gtest_main을 link할 것이다. 이 파트는 custom 한 것을 한 뒤에 test를 돌릴 필요성이 있을 대 유용할 것이다. 다 무시하고 main 만 보자
 
@@ -157,5 +161,5 @@ int main(int argc, char **argv) {
 ::testing::InitGoogleTest() 함수는 command line에서 googletest flag를 받는데 이를 통해서 사용자가 test program의 행동을 컨트롤 할 수 있다. RUN_ALL_TESTS() 전에 이를 반드시 호출해야하며 그렇제 않으면 flag의 초기화가 제대로 진행되지 않는다. 
 
 
-### 마지막으로
+## Known Limitations
 googletest는 thread-safe로 디자인 되어 있다. 다만 이는 pthreads 라이브러리에서는 그런 것이며 지금(2019/11/27)은 아직 다른 시스템에 대해서는 unsafe하다. 물론 테스트가 보통 main thread에서 일어나기에 문제는 없다. 
