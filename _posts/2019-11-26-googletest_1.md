@@ -1,11 +1,10 @@
 ---
 layout: post
 title:  "googletest_1"
+date:   2019-11-26
 comments: true
-date:   2019-11-26 
-categories: cpp 
+categories: cpp
 ---
-
 # Googletest Primer
 
 ## Introduction: Why googletest?
