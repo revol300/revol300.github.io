@@ -23,19 +23,7 @@ About googletest
 구글 테스트는 xUnit architecture에 기반했기 때문에 JUnit PyUnit 등등을 사용해 봣다면 금방 쓸 수 있다.
 
 구조
-
-test는 assertion을 이용해서 test code의 동작 결과를 확인한다. assertion은 조건문이 treu인지 확인하는데, assertion의 결과는 success, fatal failure, non-fatal failure로 구분된다. fatal failure의 경우 현재 function을 중단하며 이외의 경우 프로그램이 정상작동한다. 
-
-테스트 프로그램의 구조는 아래와 같다.
-
-test program +--------------------> test suite +----------------> test
-             |                                 |
-             |                                 +----------------> test
-             |                                 |
-             |                                 +----------------> test
-             |
-             |
-             +--------------------> test suite +----------------> test
+test program은 하나 이상의 test suite로 이루어져 있고 test suite 또한 하나  이상의 test로 이루어져 있다. test는 assertion을 이용해서 test code의 동작 결과를 확인한다. assertion은 조건문이 treu인지 확인하는데, assertion의 결과는 success, fatal failure, non-fatal failure로 구분된다. fatal failure의 경우 현재 function을 중단하며 이외의 경우 프로그램이 정상작동한다. 
 
 *만약 test suite의 여러 테스트가 object나 subroutine을 공유해아 한다면 이들을 test fixture class에 넣자
 
