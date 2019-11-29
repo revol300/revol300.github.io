@@ -7,6 +7,8 @@ categories: cpp
 ---
 ### Build googletest with CMake
 
+[googletest-build](https://github.com/google/googletest/blob/master/googletest/README.md) 의 내용을 임의로 번역하였습니다.
+
 #### Standalone CMake Project
 
 googletest를 standalone project로 만든다면 보통 다음과 같다.

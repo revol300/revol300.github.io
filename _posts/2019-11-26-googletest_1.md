@@ -7,6 +7,8 @@ categories: cpp
 ---
 # Googletest Primer
 
+[googletest primer](https://github.com/google/googletest/blob/master/googletest/docs/primer.md)의 내용을 일부 번역하였습니다.
+
 ## Introduction: Why googletest?
 
 1. 테스트는 독립적이고 반복 가능해야한다. 다른 테스트의 결과에 따라 그 값이 달라지는 테스트는 디버깅하기 곤란하다. => googletest는 test를 다른 object에서 돌아가도록 함으로써 test를 격리한다. googletest를 이용하면 실패한 test를 독립적으로 돌려서 빠른 디버깅이 가능하다.
