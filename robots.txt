@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://revol300.github.io/sitemap.xml
