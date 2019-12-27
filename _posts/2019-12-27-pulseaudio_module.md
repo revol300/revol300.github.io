@@ -98,3 +98,70 @@ int pa__init(pa_module* m){
 
 ## Optional functions
 
+위 함수 이외에도 작성할 수 있는 몇몇 함수들이 더 있다.
+
+```c
+const char* pa__get_author();
+
+const char* pa__get_description();
+
+const char* pa__get_usage();
+
+const char* pa__get_version();
+```
+
+이들은 module에 대한 추가적인 정보를 제공해주며 다음을 통해서 추가적인 정보를 알아낼 수 있다.
+
+```bash
+pulseaudio --dump-modules --verbose
+```
+
+위의 함수들을 macro를 써서 더 간결하게 표현할 수도 있다. module-null-sink.c를 예로 들면,
+
+```c
+PA_MODULE_AUTHOR("Lennart Pottering")
+PA_MODULE_DESCRIPTION("Clocked NULL sink")
+PA_MODULE_VERSION(PACKAGE_VERSION)
+PA_MODULE_USAGE(
+      "format=<sample format> "
+      "channels=<number of channels> "
+      "rate=<sample rate> "
+      "sink_name=<name of sink>"
+      "channel_map=<channel map>"
+      "description=<description for the sink>")
+```
+
+## Static linking of modules
+동적 로딩 뿐만이 아니라, daemon에서 모듈 정적 링크도 가능하다. 물론 모든 모듈이 자신의 pa__init를 정의하기 때문에 일반적으로는 하나의 모듈에 대해서만 정적 링크를 사용할 수 있다. 하지만, PulseAudio는 libtool을 사용하여 이러한 문제없이 동일한 코드를 동적으로 또는 정적으로 링크 할 수있는 방법을 제공한다. 
+
+이를 위해서는 소스 파일에서 포함할 헤더 파일을 작성해야합니다. null-sink를 예로 들어보다. 다음은 module-null-sink.c가 포함할 module-null-sink-symdef.h의 내용이다.
+
+```c
+#ifndef foomodulenullsinksymdeffoo
+#define foomodulenullsinksymdeffoo
+
+#include <pulsecore/module.h>
+
+#define pa__init module_null_sink_LTX_pa__init
+#define pa__done module_null_sink_LTX_pa__done
+#define pa__get_author module_null_sink_LTX_pa__get_author
+#define pa__get_description module_null_sink_LTX_pa__get_description
+#define pa__get_usage module_null_sink_LTX_pa__get_usage
+#define pa__get_version module_null_sink_LTX_pa__get_version
+
+int pa__init(pa_module*m);
+void pa__done(pa_module*m);
+
+const char* pa__get_author(void);
+const char* pa__get_description(void);
+const char* pa__get_usage(void);
+const char* pa__get_version(void);
+
+#endif
+```
+
+물론 이는 너무 수동적인 방식으로 pulseaudio 개발자는 M4 scipt를 사용해서 build time에 이 symdef file을 생성할 수 있다. [source : branches / lennart / src / Makefile.am Makefile.am] ( "SYMDEF"검색) 및 [source : branches / lennart / src / modules / module-defs.h.m4 모듈 /module-defs.h .m4]를 참조하자.
+
+## State data
+pa__init 과 pa__done에서 module은 internal data를 어떻게 관리할까? 이는 pa_module과 연관이 있다. pa_module에는 사용자 데이터 필드가 있다. 이는 void 포인터 타입으로, 그 목적은 module의 internal data에 대한 포인터를 저장에 있다. 따라서 pa__init에서 데이터에 사용하려는 일부 데이터 구조를 할당한 다음 pa_module (매개 변수로 제공) userdata 필드를 통해 할당된 data를 사용 가능하다. pa__done에서도 마찬가지로 동일한 pa_module 매개 변수를 찾을 수 있으며 이를 통해 내부 데이터를 찾을 수 있다.
+
