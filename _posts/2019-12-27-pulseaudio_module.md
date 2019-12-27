@@ -11,7 +11,7 @@ categories: pulseaudio
 
 ## Introduction
 
-PulseAudio는 오픈소스로 직접 소스코드를 보면서 그 동작원리를 이해할 수 있지만 현실적으로 내가 소스 코드만을 가지고  PulseAudio를 이해하기에는 알고 있는 바가 너무 없다. 다행히 [PulseAudio under the hood](https://gavv.github.io/articles/pulseaudio-under-the-hood/)라는 좋은 글과 [PulseAudio Documentation](https://freedesktop.org/software/pulseaudio/doxygen/) 을 통해 PulseAudio의 간단한 사용과 Pulseaudio 이해의 첫 발은 내딛었다. 이제 더 깊은 이해를 위해 [PulseAduio Developer Page](https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/)의 글들을 하나하나 읽어가면서 정리하고자 한다. 이 글의 순서대로 PulseAudio의 module을 어떻게 작성하는지에 대해 내용을 먼저 요약하려 한다.
+PulseAudio는 오픈소스로 직접 소스코드를 보면서 그 동작원리를 이해할 수 있다. 하지만, 현실적으로 내가 소스 코드만을 가지고  PulseAudio를 이해하기에는 알고 있는 바가 너무 없다. 다행히 [PulseAudio under the hood](https://gavv.github.io/articles/pulseaudio-under-the-hood/)라는 좋은 글과 [PulseAudio Documentation](https://freedesktop.org/software/pulseaudio/doxygen/) 을 통해 PulseAudio의 간단한 사용과 Pulseaudio 이해의 첫 발은 내딛었다. 이제 더 깊은 이해를 위해 [PulseAduio Developer Page](https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/)의 글들을 하나하나 읽어가면서 정리하고자 한다. 이 글의 순서대로 PulseAudio의 module을 어떻게 작성하는지에 대해 내용을 먼저 요약하려 한다.
 
 ## What is a module?
 
