@@ -4,6 +4,9 @@ title:  "googletest_2"
 date:   2019-11-28
 comments: true
 categories: cpp
+tag:
+- c++
+- googletest
 ---
 ### Build googletest with CMake
 
