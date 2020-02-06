@@ -3,7 +3,11 @@ layout: post
 title:  "googletest_1"
 date:   2019-11-26
 comments: true
+excerpt: "A ton of text to test readability."
 categories: cpp
+tag:
+- c++ 
+- googletest
 ---
 # Googletest Primer
 

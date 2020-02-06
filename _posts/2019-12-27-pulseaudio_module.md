@@ -4,6 +4,9 @@ title:  "pulseaudio module의 작성"
 date:   2019-12-27
 comments: true
 categories: pulseaudio 
+tag:
+- c
+- pulseaudio
 ---
 # Writing new PulseAudio modules 
 
