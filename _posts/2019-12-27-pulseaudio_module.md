@@ -6,6 +6,7 @@ comments: true
 categories: pulseaudio 
 tag:
 - c
+- multimedia
 - pulseaudio
 ---
 # Writing new PulseAudio modules 
