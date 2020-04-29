@@ -129,7 +129,7 @@ avformat_open_input (AVFormatContext **ps, const char *filename, AVInputFormat *
 Open an input stream and read the header.
 The codecs are not opened. The stream must be closed with avformat_close_input().
 ```
-단순하게 filename에 해당하는 파일을 열어서 header를 읽고 input stream을 열어주는 함수이다.
+filename에 해당하는 파일을 열어서 header를 읽고 input stream을 열어주는 함수이다.
 
 ```c++
 // Find stream information from given fmt_ctx.
@@ -146,7 +146,7 @@ avformat_find_stream_info (AVFormatContext *ic, AVDictionary **options) : Read p
 이제 열어놓은 파일에 대해서 stream 정보를 가져온다. 
 
 AVFormatContext의 구조체 정보는 [여기](https://ffmpeg.org/doxygen/3.3/structAVFormatContext.html) 에서 볼 수 있다.
-이제 필요한 정보는 다 받아왔으므로 아래와 같이 출려해주면,
+이제 필요한 정보는 다 받아왔으므로 아래와 같이 출력해주면,
 
 ```c++
 // fmt_ctx->nb_streams : number of total streams in video file.
@@ -186,4 +186,4 @@ avformat_close_input (AVFormatContext** s) : Close an opened input AVFormatConte
 ```
 
 
-# Tutorial2에서는 FFmpeg을 file의 데이터를 demuxing 하는 과정에 대해서 알아보자
+Tutorial2에서는 FFmpeg을 file의 데이터를 demuxing 하는 과정에 대해서 알아보자
