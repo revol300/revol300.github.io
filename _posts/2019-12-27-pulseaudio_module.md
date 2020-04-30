@@ -1,8 +1,9 @@
 ---
 layout: post
-title:  "pulseaudio module의 작성"
+title:  "pulseaudio에 추가기능을 넣으려면 어떻게 해야할까??"
 date:   2019-12-27
 comments: true
+excerpt: "Writing new pulseaudio modules"
 categories: pulseaudio 
 tag:
 - c
