@@ -364,3 +364,35 @@ AVDictionary ** 	options
 ) : Allocate the stream private data and write the stream header to an output media file.
 ```
 avformat_write_header를 통해서 파일에 header값을 써준다. 이제 파일에 실제 stream data를 쓸 준비가 되었다!!
+
+이제 다시 main으로 돌아와보자
+
+```
+void av_dump_format (AVFormatContext *ic, int index, const char *url, int is_output)
+Print detailed information about the input or output format, such as duration, bitrate, streams, container, programs, metadata, side data, codec and time base. 
+Parameters
+  ic : the context to analyze
+  index : index of the stream to dump information about
+  url : the URL to print, such as source or destination file
+  is_output : Select whether the specified context is an input(0) or output(1) 
+```
+이름 그대로 input output format에 대한 정보를 출력해주는 함수로 큰 역할은 없다
+이후 while문 내에서
+av_read_frame을 통해 frame을 읽어 pkt에 담는다
+그후 in_stream과 out_stream을 뽑아서 각 stream에 맞게 time_base를  변환해주고 여기 에 맞춰서
+av_interleaved_write_frame을 통해서 pkt을 outputFile에 적어준다.
+
+pkt를 다 쓰고 난 뒤에는 av_write_trailer를 통해 정리를 해준다.
+```
+int av_interleaved_write_frame (AVFormatContext *s, AVPacket *pkt)
+Write a packet to an output media file ensuring correct interleaving.
+
+This function will buffer the packets internally as needed to make sure the packets in the output file are properly interleaved in the order of increasing dts. Callers doing their own interleaving should call av_write_frame() instead of this function.
+
+Using this function instead of av_write_frame() can give muxers advance knowledge of future packets, improving e.g. the behaviour of the mp4 muxer for VFR content in fragmenting mode.
+```
+```
+int av_write_trailer(AVFormatContext* s)
+Write the stream trailer to an output media file and free the file private data.
+May only be called after a successful call to avformat_write_header.
+```
