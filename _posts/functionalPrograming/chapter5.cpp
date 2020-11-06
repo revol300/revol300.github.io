@@ -184,15 +184,43 @@ person_t new_person {
 
 class person_t {
   public:
+    //lvalue에 대해 작동하는 버전
     person_t with_name(const std::string& name) const & {
       person_t result(*this);
       result.m_name = name;
       return result;
     }
 
+    //rvalue에 대해 작동하는 버전
     person_t with_name(const std::string& name) && {
       person_t result(std::move(*this));
       result.m_name=name;
       return result;
     }
 };
+
+// 임시 객체의 복사본을 만들지 않고서도 코드를 최적화 => 현저한 개선이 있을 때에만 사용
+
+// const 주의 사항
+// 객체 이동을 차단하는 const
+person_t some_function() {
+  const person_t result;
+  // 결과를 반환하기 전에 해야 할 작업
+  return result;
+}
+
+person_t person = some_function();
+
+//위와 같은경우 복사가 일어난다
+
+// 얕은 const
+class company_t {
+  public:
+    std::vector<std::string> employees_names() const;
+  private:
+    std::vector<person_t*> m_employees;
+};
+
+// 포인터에 대한 const만 적용되고 vector의 pointer가 가리키는 값의 변경에는 영향을 주지 않는다.
+
+//* propagate_const wrapper를 사용하면 이러한 문제를 해결할 수 있다
