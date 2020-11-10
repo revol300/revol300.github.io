@@ -227,3 +227,83 @@ auto fibmemo = make_memoized_r<unsigned int(unsigned int)>(
            : fib(n-1)+fib(n-2);
   }
 );
+
+// 식 템플릿과 지연 문자열 연결
+std::string fullname = title + " " + surname + "," + name;
+
+std::string fullname = (((title+ " ") + surname) + ",") + name;
+
+// 각 연산을 수행할 때마다 새로 메모리를 할당하고 복사하는 작업이 수행
+// string의 크기를 먼저 알고 메모리 할당후에 그때 복사를 하면 좋지 않을까?
+
+template <typename... Strings>
+class lazy_string_concat_helper;
+
+template <typename LastString, typename... Strings>
+class lazy_string_concat_helper<LastString, Strings...> {
+  private:
+    LastString data;
+    lazy_string_concat_helper<Strings...> tail;
+
+  public:
+    lazy_string_concat_helper( LastString data, lazy_string_concat_helper<Strings...> tail)
+      : data(data)
+      , tail(tail) {}
+
+    int size() const {
+      return data.size() + tail.size();
+    }
+
+    template <typename It>
+    void save(It end) const {
+      const auto begin = end - data.size();
+      std::copy(data.cbegin(), data.cend(), begin);
+      tail.save(begin);
+    }
+
+    //implicit conversion
+    operator std::string() const {
+      std::string result(size(), '\0');
+      save(result.end());
+      return result;
+    }
+
+    lazy_string_concat_helper<std::string, LastString, Strings...>
+      operator+(const std::string& other) const {
+        return lazy_string_concat_helper <std::string, LastString, Strings...> (other, this);
+    }
+}
+
+// 재귀함수 이므로 기본 경우 생성 필요
+template <>
+class lazy_string_concat_helper<> {
+  public:
+    lazy_string_concat_helper() {}
+    int size() const { return 0;}
+    template <typename It> void save(It) const {}
+
+    lazy_string_concat_helper<std::string> operator+(const std::string& other) const {
+      return lazy_string_concat_helper<std::string>(
+        other,
+        *this
+      );
+    }
+};
+
+
+// 사용 예시
+lazy_string_concat_helper<> lazy_concat;
+
+int main(int argc, char* argv[]) {
+  std::string name = "Jane";
+  std::string surname = "Smith";
+
+  const std::string fullname = 
+    lazy_concat + surname + "," + name;
+  std::cout << fullname << std::endl;
+}
+
+// 순수성과 식 템플릿
+// lazy_string_concat_helper 클래스에 원본 문자열의 복사본을 저장 => 원본 문자열에 대한 참조를 사용하는 것이 더 효율적
+template <typename LastString, typename... Strings>
+class 
