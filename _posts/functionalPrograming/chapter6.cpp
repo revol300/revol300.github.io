@@ -320,3 +320,16 @@ class lazy_string_concat_helper<LastString, Strings...> {
     ...
 };
 
+// 그러나 실제로 이렇게 적용할 경우 두가지 문제가 있다
+// 1. 문자열이 정의된 범위 외부에서 이 식을 사용할 수 없다 => 참조자를 이용하기 때문에 객체가 삭제되면 이용이 불가
+// 2. 참조자를 이용하기에 문자가 변경될수 있따
+// ex.)
+std::string name = "Jane";
+std::string surname = "Smith";
+
+const auto fullname = lazy_concat + surname + "," + name;
+
+name = "John"
+
+std::cout << fullname << std::endl; // 실제 출력은 "Smith, Jane"이 아니라  "Smith, John"이다
+// 참조자를 이용할경우 순수성이 깨지므로 지연 평가시 문제가 될 수 있다. 이를 유념하자!
