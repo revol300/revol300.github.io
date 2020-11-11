@@ -306,4 +306,17 @@ int main(int argc, char* argv[]) {
 // 순수성과 식 템플릿
 // lazy_string_concat_helper 클래스에 원본 문자열의 복사본을 저장 => 원본 문자열에 대한 참조를 사용하는 것이 더 효율적
 template <typename LastString, typename... Strings>
-class 
+class lazy_string_concat_helper<LastString, Strings...> {
+  private:
+    const LastString& data;
+    lazy_string_concat_helper<Srings...> tail;
+
+  public:
+    lazy_string_concat_helper(
+        const LastString& data,
+        lazy_string_concat_helper<Strings...> tail)
+      : data(data)
+      , tail(tail) {}
+    ...
+};
+
