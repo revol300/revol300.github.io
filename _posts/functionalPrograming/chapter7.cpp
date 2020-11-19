@@ -22,4 +22,10 @@ void group_by_name(Persons& persons, F team_for_person, const std::Vector<std:st
 
 // 범위 : 두개의 반복자를 사용
 // 하나는 컬렉션의 첫 요소를 가리키고 다른 하나는 마지막 요소의 바로 다음 항목을 가리킨다
-//
+// Ex
+std::vector<std::string> names =
+  transform(filter(people, is_female), name);
+
+std::vector<std::string> names = people | filter(is_female)
+                                        | transform(name);
+
