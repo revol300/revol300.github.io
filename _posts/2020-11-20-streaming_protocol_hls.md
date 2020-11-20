@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Streaming Service - HLS"
-date:   2020-04-29
+date:   2020-11-20
 comments: true
 excerpt: "HLS (HTTP Live Streaming)"
 categories: multimedia
@@ -41,5 +41,14 @@ distribution system은 web server 혹은 web-caching system으로 media file과 
 index file을 통해서 적합한 media file을 web server에 요청하고 다운 받아진 resource를 연속적인 stream으로 재생할 수 있게 재구성 해야하는 역할이다. 
 
 index file에는 지금 다운받을 수 있는 media file, decryption key 그리고 대체 할 수 있는 stream에 대한 정보를 포함하고 있다. client는 index file을 통해 원하는 media file을 요청하고 각 파일에 있는 연속적인 stream segment를 다운받는다. 충분한 양의 데이터를 다운받으면 클라이언트는 이를 통해서 stream에 대한 정보를 사용자에게 보여준다.
+이런 프로세스는 client가 EXT-X-ENDLIST tag를 index file에서 보기 전까지 반복된다. 해당 태그가 보이지 않으면 client는 live streaming이 계속 진행중이라 판단하고 index file을 주기적으로 호출한다. 
 
-client는 decryption key를 통해서 user 
+# Deploying a Basic HTTP Live Stream
+그러면 HLS에 대해서는 대략적인 설명을 했으므로 실제로 HLS를 통해 영상을 재생해보자
+
+일단 HLS를 이용하려면 3가지가 필요하다. 
+1. Server Component : segmenet로 나눠진 파일을 미리 준비해놓자
+2. Distribution Component : 이렇게 만들어진 파일을 web server 나 CDN으로 client에게 제공하는 부분인데, 그냥 주어진 링크를 통해서 1,2를 대체하자
+3. Client Software : brower에서 뜨는 HTML page를 이용하자 Safari에서는 video 태그 자체에서 hls를 지원하기 때문에 별도로 추가할 사항이 없지만 다른 브라우저의 경우에는 hls기능 지원을 위해 hls.js가 필요할 수 있다.
+
+
