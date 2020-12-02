@@ -62,3 +62,49 @@ std::vector<std::string> names = people | filter(is_female)
                                         | transform(name)
                                         | take(3);
 // 위 코드에 대한 분석
+// 1. people | filter(is_femal) 이 평가될  때 새 뷰가 생성되는 것 외에는 아무 일도 발생하지 않는다.
+// is_femail 조건자를 만족하는 첫 번째 항목을 가리키는 소스 컬렉션에 대한 반복자를 잠재적으로 초기화하는 것을 제외하면 people 컬렉션에서 한 사람도 접근하지 않았따.
+// 2. 이 뷰를 | transform(name)에 전달한다. 발생하는 유일한 것은 새로운 뷰가 만들어진다는 점이다.
+// 여전히 한 사람도 접근하지 않았으며 이들 중의 그 누구한테도 name 함수를 호출하지 않았다.
+// 3. take(3)을 이 결과에 적용한다. 여전히 새로운 뷰만 생성될 뿐이다.
+// 4. | take(3) 변환의 결과로 얻은 뷰에서 문자열 벡터를 만들어야 한다
+// 이제 뷰가 다 결정된 상태에서 다음과 같은 일이 일어난다
+// 1. take에 의해 반환되는 범위 뷰에 속하는 프록시 반복자에 대한 역참조 연산자를 호출한다
+// 2. take에 의해 생성된 프록시 반복자는 요청을 transform에 의해 생성된 프록시 반복자로 전달한다. 이 반복자는 요청을 전달한다.
+// 3. filter 변환에 의해 정의된 프록시 반복자를 역참조하려고 한다. 이것은 소스 컬렉션을 거치고 is_female 조건자를 만족하는 첫 번째 사람을 찾아 반환한다.
+// 이번이 컬렉션 내의 사람에 처음 접근하는 것이며, 처음으로 is_female 함수를 호출하는 것이다.
+// 4. filter 프록시 반복자를 역참조함으로써 얻어지는 사람은 name 함수로 전달되고 그 결과는 names 벡터에 삽입되도록 전달하는 take 프록시 반복자로 반환된다.
+
+// 범위를 통한 값 변경
+// 많은 유용한 변환이 간단한 뷰로 구현될 수 있지만 일부는 원본 컬렉션을 변경한다.
+// 이들 변환을 뷰에 상반되는 액션이라 한다. ex) 정렬
+// ex.) 단어를 읽어서 중복없이 순서대로 출력하는 함수
+std::vector<std::string words = 
+  read_text() | action::sort
+              | action::unique;
+// action::unique대신에 view::unique를 사용할 수도 있지만 view::unique는 연속해서 나타나는 반복되는 모든 값을 건너뛰는 뷰를 생성하고 실제 컬렉션에 대한 변화는 주지 않는다.
+
+// 제한 범위와 무한 범위의 사용
+// sentinel : 반복자가 끝가지 왔는지를 검사하는데 사용하는 특별한 값
+// 입력 범위 처리 최적화에 제한 범위 사용
+std::accumulate(std::istream_iterator<double>(std::cin),
+                std::istream_iterator<double>(),
+                0);
+
+template <typename T>
+bool operator==(const std::istream_iterator<T>& left,
+    const std::istream_iterator<T>& right) {
+  if(left.is_sentinel() && right.is_sentinel()) {
+    return true;
+  } else if (left.is_sentinel()) {
+    //센티넬 조건자가 right 반복자에 대해
+    //true 인지를 검사한다.
+  } else if (right.is_sentinel()) {
+    // 센티넬 조건자가 left 반복자에 대해
+    // true 인지를 검사한다.
+  } else {
+    // 두 반복자 모두가 정상적인 반복자이며,
+    // 이들 반복자가 컬렉션 내의 동일한 지점을
+    // 가리키는지를 검사한다.
+  }
+}
