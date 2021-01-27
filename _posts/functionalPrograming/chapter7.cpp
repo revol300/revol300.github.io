@@ -85,7 +85,7 @@ std::vector<std::string words =
 // action::unique대신에 view::unique를 사용할 수도 있지만 view::unique는 연속해서 나타나는 반복되는 모든 값을 건너뛰는 뷰를 생성하고 실제 컬렉션에 대한 변화는 주지 않는다.
 
 // 제한 범위와 무한 범위의 사용
-// sentinel : 반복자가 끝가지 왔는지를 검사하는데 사용하는 특별한 값
+// sentinel : 반복자가 끝가지 왔는지를 검사하는데 사용하는 특별한 값 딱히 정해저 있는 것이 아니다
 // 입력 범위 처리 최적화에 제한 범위 사용
 std::accumulate(std::istream_iterator<double>(std::cin),
                 std::istream_iterator<double>(),
@@ -107,4 +107,43 @@ bool operator==(const std::istream_iterator<T>& left,
     // 이들 반복자가 컬렉션 내의 동일한 지점을
     // 가리키는지를 검사한다.
   }
+}
+// 오른쪽 왼쪽을 다 봐야하는 것에서 비효율적인 연산 
+// 컬렉션의 끝이 반복자이어야 한다는요건을 제거한다면 훨씬 쉽게 작성이 가능하다
+// 오른쪽과 왼쪽을 비교하여 다르면 끝
+
+// 센티넬로 무한 범위 만들기
+
+// 센티널 접근법을 사용하면 무한 범위를 쉽게 만들 수 있다. 
+
+// 처음 10개 영화와 그 순위를 출력하기
+template<typename Range>
+void write_top_10(const Range& xs) {
+  auto items = 
+    view::zip(xs, view::ints(1)) // 1에서 시작하는 정수 범위로 영화범위를 압축한다.
+      | view::transform([](const auto& pair) { // transform 함수는 쌍을 받아서 영화 순위와 이름을 갖는 문자열을 만든다
+        return std::to_string(pair.second) + " " + pair.first;
+      })
+      | view::take(10); // 처음 10편의 영화에만 관심이 있다.
+  for (const auto& item : items) {
+    std::cout << item << std::endl;
+  }
+}
+
+// view::zip 함수는 두개의 범위를 받아서 이들 범위로 부터 항목의 쌍을 만드는 함수이다.
+// 무한 범위의 또 다른 이점은 이들을 사용하는 거싱 아니라 이들에 동작할 수 있는 코드를 설계할 수 있고 이를 통해 크기를 알수 없는 범위뿐만 아니라 어떤 크기의 범위에서든 동작하는 코드를 만들 수 있다는 것이다.
+
+// 단어 빈도 계산에 범위 사용
+std::vector<std::string> words = 
+  istream_range<std::string>(std::cin)
+  | view::transform(string_to_lower) // 모든 단어를 소문자화한다
+  | view::transform(string_only_alnum) // 문자와 숫자만 유지한다
+  | view::remove_if(&std::string::empty); // 토큰에 문자나 숫자가 하나도 없다면 빈 문자열을 결과로 받을 수 있다. 이들은 건너 뛰자
+
+std::string string_to_lower(const std::string& s) {
+  return s | view::transform(tolower);
+}
+
+std::string string_only_alnum(const std::string &s) {
+  return s | view::filter(isalnum);
 }
