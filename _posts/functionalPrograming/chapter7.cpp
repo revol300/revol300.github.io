@@ -147,3 +147,29 @@ std::string string_to_lower(const std::string& s) {
 std::string string_only_alnum(const std::string &s) {
   return s | view::filter(isalnum);
 }
+
+// 단어의 묶음으로부터 빈도-단어 쌍으로 정렬된 목록 구하기
+const auto results = 
+  words | view::group_by(std::equal_to<>()) // words 범위에서 여러 단어의 발생을 그룹화한다.
+        | view::transform([](const auto& group) {
+              const auto begin = std::begin(group);
+              const auto end = std::end(group);
+              const auto count = distance(begin, end);
+              const auto word = *begin;
+
+              return std::make_pair(count, word); // 각 그룹의 크기를 구하고 단어 빈도와 단어로 이뤄진 쌍을 반환한다
+            })
+        | to_vector | action::sort;
+
+for (auto value: results | view::reverse
+                         | view::take(n)) {
+  std::cout << value.first << " " << value.second << std::endl;
+}
+
+// 범위 기반의 for 루프는 C++17에서 센티넬을 지원하기 시작 예전 컴파일러를 사용한다면 위 코드를 range-v3 라이브러리를 사용하여 다음과 같이 사용해야한다
+RANGES_FOR(auto value, results | view::reverse
+                               | view::take(n)) {
+  std::cout << value.first << " " << value.second << std::endl;
+}
+
+// 다음 url을 참조 : https://forums.manning.com/posts/list/43776.page
