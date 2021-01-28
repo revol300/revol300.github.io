@@ -5,6 +5,8 @@
 
 // 리스트의 시작 부분에 요소 추가와 삭제
 // 새로운 요소를 만들어서 리스트의 앞에 추가 
+
+/*
                                                      +-------+       +-------+        +-------+
                                                      |       |       |       |        |       |
                         original List (Root) +-----> |   A   | +---> |   B   | +----> |   C   |
@@ -27,12 +29,15 @@ New List (Root)  +---------> |   E    |  +
                                                                          |
 New List (Root)+---------------------------------------------------------+
 
+*/
+
 // 데이터의 복사도 필요없고 실행시간 면에서도 효율적이다
 
 // 리스트의 끝부분에 요소 추가와 삭제
 // 이 경우에는 어쩔 수 없이 복사를 해야 한다
 // 리스트 중간에서 요소 추가와 삭제는 적당한 복사를 통해 해결해야한다
 
+/*
 | O(1)                  | O(n)                 |
 |-----------------------|----------------------|
 | 첫 번째 요소 가져오기 | 추가하기             |
@@ -40,6 +45,41 @@ New List (Root)+---------------------------------------------------------+
 | 첫 번째 요소 삭제하기 | 특정 지점에 삽입하기 |
 |                       | 마지막 요소 가져오기 |
 |                       | n번째 요소 가져오기  |
+*/
  
 // 메모리 관리
 // std::shared_ptr를 사용하면 깔끔하게 메모리 관리가 가능하다
+template <typename T>
+class list {
+  public:
+    ...
+  private:
+    struct node {
+      T value;
+      std::shared_ptr<node> tail;
+    };
+
+    std::shared_ptr<node> m_head;
+}
+
+// 문제점 만약 이 shared_ptr chain이 길어진다면 스택 오버플로가 나타날 수 있다
+// 재귀적 구조체 소멸 없애기
+// swap해서 free 시킴
+
+~node() {
+  auto next_node = std::move(tail);
+  while (next_node) {
+    if(!next_node.unique()) break;
+
+    std::shared_ptr<node> tail;
+    swap(tail, next_node->tail);
+    next_node.reset();
+
+    next_node = std::move(tail);
+  }
+}
+
+// 벡터 유사 가변 자료 구조
+//
+//
+
