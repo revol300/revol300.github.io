@@ -106,4 +106,46 @@ class program_t {
 
 // 공용체와 std::variant를 통한 합 유형
 
+class init_t {
+};
+
+class running_t {
+  public:
+    unsigned count() const {
+      return m_count;
+    }
+
+    ...
+ private:
+    unsigned m_count=0;
+    socket_t m_web_page;
+};
+
+class finished_t {
+  public:
+    finished_t(unsigned count)
+      : m_count(count) {
+      }
+    unsigned count() const {
+      return m_count;
+    }
+
+  private:
+    unsigned m_count;
+}
+
+// std::variant를 사용한 주프로그램
+class program_t {
+public:
+  program_t() : m_state(init_t()) {}
+
+  void counting_finished() {
+    auto* state = std::get_if<running_t>(&m_state);
+    assert(state != nullptr);
+    m_state = finished_t(state->count());
+  }
+
+private:
+  std::variant<init_t, running_t, state_t> m_state;
+}
 
