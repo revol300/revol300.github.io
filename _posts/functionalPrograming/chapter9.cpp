@@ -149,3 +149,71 @@ private:
   std::variant<init_t, running_t, state_t> m_state;
 }
 
+// 특정 상태 구현
+// 하나의 상태를 처리하는 논리를 그 상태를 정의하는 객체 안에 두고
+// 상태 전이를 수행하는 논리를 주 프로그램에 배치
+
+void count_words (const std::string& web_page) {
+  assert(m_state.index() == 0);
+  m_state = running_t(web_page);
+  ... // 단어의 개수를 센다
+  counting_finished();
+}
+
+void counting_finished() {
+  const auto* state = std::get_if<running_t>(&m_state);
+  assert(state != nullptr);
+  m_state = finished_t(state->count());
+}
+
+class running_t {
+  public:
+    running_t(const std::string& url)
+      : m_web_page(url) {
+
+    }
+
+    void count_words() {
+      m_count = std::distance(
+          std::istream_iterator<std::string>(m_web_page),
+          std::istream_iterator<std:string>());
+    }
+
+    unsigned count() const {
+      return m_count;
+    }
+  private:
+    unsigned m_count = 0;
+    std::istream m_web_page;
+}
+
+// 특수한 합 유형 : 옵션 값
+
+struct nothing_t {};
+template <typename T>
+using optional = std::variant<nothing_t, T>;
+
+// T이면 T를 주고 T가 아니면 nothing을 반환하므로 매우 유용하다
+
+template <typename T, template Variant>
+std::optional<T> get_if(const Variant& variant) {
+  T* ptr = std::get_if<T>(&variant);
+
+  if(ptr) {
+    return *ptr;
+  } else {
+    return std::optional<T>();
+  }
+}
+
+// 이에 맞추어 counting_finished 함수를 다시 구현하면
+
+void counting_finished() {
+  auto state = get_if<running_t>(m_state);
+  assert(state.has_value());
+  m_state = finished_t(state->count());
+}
+
+// get_if 는 무조건 포인터 혹은 std::optional<T>() 라는 값을 주기 때문에 has_value()함수 사용이 가능하다.
+
+
