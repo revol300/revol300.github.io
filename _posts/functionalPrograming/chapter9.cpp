@@ -320,27 +320,63 @@ void swap(expected& other) {
   using std::swap;
   if (m_valid) {
     if(other.m_valid) {
-      swap(m_value, other.m_value);
+      //둘 다 값이 있으면 그냥 swap
+      swap(m_value, other.m_value); 
     } else {
+      //other가 오류값이 있으면 오류값을 temp에 옮기고
       auto temp = std::move(other.m_error);
+      //other 지운뒤
       other.m_error.~E();
+      //value를 other로 옮기고
       new (&other.m_value) T(std::move(m_value));
+      //value를 지운뒤
       m_value.~T();
+      //temp를 error에 옮긴다
       new (&m_error) E(std::move(temp));
+      //무사히 진행되면 valid 값 교환
       std::swap(m_valid, other.m_valid);
     }
   } else {
     if (other.m_valid) {
+      // 순서만 바꿔서 다시 수행
       other.swap(*this);
     } else {
+      // 둘다 오류이므로 그냥 swap
       swap(m_error, other.m_error);
     }
   }
 }
 
 expected& operator=(expeted other) {
+  //other는 copy되어 swap 되므로 exception-safe하다
   swap(other);
   return *this;
 }
 
+// 형 변환 연산자 정의
+operator bool() const {
+  return m_valid;
+}
+
+// 형 변환 연산자 정의
+operator std::optional<T>() const {
+  if (m_valid) {
+    return m_value;
+  } else {
+    return std::optional<T>();
+  }
+}
+
+template <typename T, template Variant,
+         template Expected = expected<T, std::string>>
+Expected get_if(const Variant& variant) {
+  T* ptr = std::get_if<T>(variant);
+  if (ptr) {
+    return Expected::success(*ptr);
+  } else {
+    return Expected::error("Variant doesn't contain the desired type");
+  }
+}
+
+// 대수적 데이터 유형으로 도메인 모델링
 
