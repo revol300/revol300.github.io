@@ -216,4 +216,131 @@ void counting_finished() {
 
 // get_if 는 무조건 포인터 혹은 std::optional<T>() 라는 값을 주기 때문에 has_value()함수 사용이 가능하다.
 
+// 오류 처리를 위한 합 유형
+// 위의 함수 예시에서 오류 처리는 고려되고 있지 않다. 이를 고려해보자
+// T : 반환하려는 값의 유형
+// E : 오류 유형
+
+template<typename T, typename E>
+class expected {
+  private:
+    union {
+      T m_value;
+      E m_error;
+    };
+
+    bool m_valid;
+};
+
+template<typename T, typename E>
+class expected {
+  ...
+  T& get() {
+    if (!m_valid) {
+      throw std::logic_error("Missing a value");
+    }
+    return m_value;
+  }
+
+  E& error() {
+    if(m_valid) {
+      throw std::logic_error("There is no error");
+    }
+    return m_error;
+  }
+
+  // m_value 나 merror에 따라 소멸자 호출
+  ~expected() {
+    if (m_valid) {
+      m_value.~T();
+    } else {
+      m_error.~E();
+    }
+  }
+
+};
+
+template<typename T, typename E>
+class expected {
+  ...
+  template <typename... Args>
+  static expected success(Args&&... params) {
+    expected result;
+    result.m_valid=true;
+    new (&result.m_value)
+      T(std::forward<Args>(params) ...);
+    return result;
+  }
+
+  template <typename... Args>
+  static expected error (Args&&... params) {
+    expected result;
+    result.m_valid = false;
+    new (&result.m_error)
+      E(std::forward<args>(params) ...);
+    return result;
+  }
+};
+
+// 위치 지정 (Placement) new
+// 값을 위한 메모리를 할당하고 그 값을 초기화하는 일반적인 new 구문과 달리 위치 지정 new 구문을 사용하면 이미 할당된 메모리를 사용하고 그 안에 객체를 생송할 수 있다.
+// expected<T,E> 경우 메모리는 사용자가 정의한 공용 멤버 변수에 의해 미리 할당된다.
+// 이것은 자주 사용하는 기법은 아니지만 실행 시에 동적 메모리 할당을 수행하지 않는 합 유형을 구현하려는 경우 필요하다.
+
+// expected<T,E>의 복사 및 이동 생성자
+
+// 복사 생성자
+expected(const expected& other) : m_valid(other.m_valid) {
+  if(m_valid) {
+    new (&m_value) T(other.m_value);
+  } else {
+    new (&m_error) E(other.m_error);
+  }
+}
+
+// 이동 생성자
+expected(expected&& other) : m_valid(other.m_valid) {
+  if(m_valid) {
+    new (&m_value) T(std::move(other.m_value));
+  } else {
+    new (&m_error) E(std::move(other.m_error));
+  }
+}
+
+// 대입연산자는 다음과 같은 네 가지 경우에 동작해야 한다.
+// 1. 복사되는 대상과 복사하려는 원본 둘 다 유효한 값을 갖는 경우
+// 2. 두 인스턴스 모두 오류가 있는 경우
+// 3. this 인스턴스는 오류를 갖고 other 인스턴스는 값을 갖는 경우
+// 4. this 인스턴스는 값을 갖고 other 인스턴스는 오류를 갖는 경우
+
+// copy-and-swap을 사용하여 구현
+
+// expected<T,E>의 교환 함수
+void swap(expected& other) {
+  using std::swap;
+  if (m_valid) {
+    if(other.m_valid) {
+      swap(m_value, other.m_value);
+    } else {
+      auto temp = std::move(other.m_error);
+      other.m_error.~E();
+      new (&other.m_value) T(std::move(m_value));
+      m_value.~T();
+      new (&m_error) E(std::move(temp));
+      std::swap(m_valid, other.m_valid);
+    }
+  } else {
+    if (other.m_valid) {
+      other.swap(*this);
+    } else {
+      swap(m_error, other.m_error);
+    }
+  }
+}
+
+expected& operator=(expeted other) {
+  swap(other);
+  return *this;
+}
+
 
