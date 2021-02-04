@@ -379,4 +379,140 @@ Expected get_if(const Variant& variant) {
 }
 
 // 대수적 데이터 유형으로 도메인 모델링
+// 테니스 게임 점수 계산
+// http://codingdojo.org/kata/Tennis/
+// 1. 가능한 점수는 0, 15, 30 ,40이다.
+// 2. 한 선수가 40점을 획득하고 공을 획득하면 게임에서 승리한다.
+// 3. 두 선수가 모두 40점인 경우 규칙이 조금 달라진다. 즉, 게임은 듀스 상태가 된다.
+// 4. 듀스인 경우 공을 획득한 선수는 어드밴티지를 가진다.
+
+// 하향식 설계
+class tennis_t {
+
+  enum class points {
+    love, // zero points
+    fifteen,
+    thirty
+  };
+
+  enum class player {
+    player_1,
+    player_2
+  };
+
+  struct normal_scoring {
+    points player_1_points;
+    points player_2_points;
+  }
+
+  struct forty_scoring {
+    player leading_player;
+    points other_player_scores;
+  }
+
+  struct deuce {};
+
+  struct advantage{
+    player player_with_advantage;
+  };
+
+  std::variant<
+    normal_scoring,
+    forty_scoring,
+    deuce,
+    advantage,
+  > m_state; // 게임 종료 상태는 딱히 포함되어 있지 않다. 게임종료시 프로그램이 종료됨
+}
+
+//상태에 따른 분기
+switch (state) {
+  case normal_score_state:
+    ...
+    break;
+  case forty_scoring_state:
+    ...
+    break;
+  ...
+}
+// 위의 코드는 정수기반 유형에서만 동작한다.
+// 템플릿을 이용하여 패턴매칭 사용이 가능하지만 일반적인 프로그램을 위한 패턴 매칭을 제공하지 않는다
+// 이에 맞는 std::visit 함수가 있다
+
+std::visit([] (const auto& value) {
+    std::cout << value << std::endl;
+  },
+  m_state
+);
+
+// std::visit에서 람다를 쓰는것은 유형하나 auto를 사용하기 보다는 변형에 저장된 값을 기반으로 코드 수행을 원하는 경우가 많다
+// 이에 따라 overloading 사용을 한다
+// c++ 17이상부터 사용가능
+// variadic template 참조
+
+template <typename... Ts>
+struct overloaded : Ts... {using Ts::operator()...;}; // 몇개의 함수가 동시에 overloading됨
+
+template <typename... Ts> overloaded (Ts...) -> overloaded<Ts...>;
+
+// overloaded 템플릿은 함수 객체의 목록을 받아 제공된 모든 함수 갳게의 호출 연산자를 자체적으로 표시하는 (using Ts::operator()... 부분) 새로운 함수 객체를 만든다.
+// 이제 테니스 게임에서 이 방법ㅇ르 사용할 수 있다.
+
+void point_for(player which_player) {
+  std::visit(
+      overloaded{
+        [&](const normal_scoring& state) {
+          // 점수를 증가시키거나 상태를 전환한다.
+        },
+        [&](const forty_scoring& state) {
+          // 선수가 이기거나 듀스로 전환한다.
+        },
+        [&](const deuce& state) {
+          // 어드밴티지 상태로 전환한다.
+        },
+        [&](const advantage& state) {
+          // 선수가 이기거나 듀스 상태로 되돌아간다.
+        }
+      },
+      m_state);
+}
+
+// Mach7 라이브러리를 이용한 강력한 패턴 매칭
+// 앞선 visit보다 한 단계 더 앞선 패턴이 사용가능하다
+// 우선 앞의 코드를 Mach7을 사용하면
+void point_for(player which_player) {
+  Match(m_state) {
+    Case(C<normal_scoring>())
+
+    Case(C<forty_scoring>())
+
+    Case(C<deuce>())
+
+    Case(C<advantage())
+  }
+  EndMatch
+}
+
+// forty_scoring에 대해서더 상세하게 쓰면
+
+void point_for(player which_player) {
+  Match(m_state) {
+    Case(C<normal_scoring>())
+
+    Case(C<forty_scoring>(which_player, _))
+    // 40점을 획득한 선수가 공을 얻으면 게임에서 승리한다.
+    // 즉, 상대방 선수가 가진 점수를 고려할 필요가 없다.
+
+    Case(C<forty_scoring>(_, 30))
+    // 40점을 획득하지 않았던 선수가 공을 획득했고 (이전 경우와는 일치하지 않음)
+    // 상대방 선수의 현재 점수가 30점이라면 게임은 듀스 상태다.
+
+    Case(C<forty_scoring>())
+    // 이전 경우 중 어느것과도 일치하지 않는다면 선수의 점수를 올린다
+
+    Case(C<deuce>())
+
+    Case(C<advantage())
+  }
+  EndMatch
+}
 
