@@ -73,7 +73,7 @@ login_as_range | view::transform(user_full_name)
                | view::transform(to_html)
                | view::join;
 
-// join을 없애자
+// 모나드 M
 construct : T -> M<T>
 mbind     : (M<T1>, T1 -> M<T2>) -> M<T2>
 
@@ -91,15 +91,78 @@ mbind(mbind(m,f), g) == mbind(m ,[] (auto x) {
 
 // 기본 예제
 // std::vector로 시작
+// 함수자는 하나의 템플릿 매개변수를 갖는 클래스 탬플릿이다
+// 하나의 벡터를 가질 수 있는 transform 함수와 그 요소를 변환할 수 있는 함수가 필요하다.
+// transform은 변환된 요소의 벡터를 반환한다.
 
 template <typename T, typename F>
 auto transform(const std::vector<T>& xs, F f) {
   return xs | view::transform(f) | to_vector;
 }
+// 이제 vector는 transform을 갖는 함수자이다
 
+// 이제 모나드에 필요한 constructor를 만들자
 template <typename T>
 std::vector<T> make_vector(T&& value) {
   return {std::forward<T>(value)};
 }
 
+// 마지막으로 필요한 mbind 함수를 구현하자
+template <typename T, typename F>
+auto mbind(const std::vector<T>& xs, F f) { // f는 유형 T의 값을 받아 T 또는 다른 유형의 벡터를 반환한다.
+  auto transformed =  //f를 호출하고 벡터 범위를 만든다. 이 범위를 벡터의 벡터로 변환한다.
+    xs | view::transform(f)
+       | to_vector;
+  return transformed // 벡터에 대한 벡터를 원하지 않고 단일 벡터 내의 모든 값을 원한다.
+       | view::join
+       | to_vector;
+}
 
+// std::vector 는 모나드이다.
+
+// 범위와 모나드의 내포
+// mbind가 필요한가? => mbind를 사용하면 원본 컬렉션의 각 요소에 대해 하나의 새 요소를 생성할 수 있을 뿐만 아니라
+// 원하는 만큼의 요소를 생성할 수 있다
+
+// ex.) mbind 관점에서의 필터링
+template <typename C, typename P>
+auto filter(const C& collection, P predicate) {
+  return collection
+    | mbind([=](auto element) {
+        return view:::single(element)
+          | view::take(predicate(element)? 1: 0);
+        });
+}
+
+// 피타고라스 삼원수 생성하기
+views::ints(1)
+  | mbind([](int z) {
+      return view::ints(1,z)
+      | mbind([z](int y) {
+          return view::ints(y,z)
+          | view::transform([y,z](int x) {
+              return std::make_tuple(x,y,z);
+              });
+          });
+      })
+  | filter([](auto triple) {
+      ... // 이제 삼원수의 목록이 생겼고 피타고라스 삼원수가 아닌 정수는 필터링해야 한다.
+      });
+
+// 범위 내포를 이용한 피타고라스 삼원수 생성하기
+// for_each : 사용자가 전달한 컬렉션을 순회하면서 전달한 함수가 만든 모든 값을 수집한다.
+// yied_if : 첫 번째 인수로 지정된 조건자가 유효하다면 결과 범위에 값을 넣는다.
+// 범위 내포 = filter와 결합된 transform이나 mbind
+view::for_each(view::ints(1), [](int z) { // generage an infinite list of integers starting at 1
+  return view::for_each(view::ints(1,z), [z](int y) {
+      return view::for_each(view::ints(y,z), [y,z](int x) {
+          return yield_if(
+              x * x + y * y == z * z,
+              std::make_tuple(x,y,z)
+          );
+      });
+  });
+});
+
+// 오류 처리
+//
