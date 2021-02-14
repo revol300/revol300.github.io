@@ -165,4 +165,141 @@ view::for_each(view::ints(1), [](int z) { // generage an infinite list of intege
 });
 
 // 오류 처리
-//
+// 모나드로 std::optional<T>
+// 옵션을 사용하고자 한다면 값이 있는지 여부를 지속적으로 확인해야 한다.
+
+std::optional<std::string> current_user_html() {
+  if(!current_login) {
+    return {};
+  }
+
+  const auto full_name = user_full_name(current_login.value());
+
+  if(!full_name) {
+    return {};
+  }
+
+  return to_html(full_name.value());
+}
+
+// mbind를 잘 정의한다면 이를 방지할 수 있다
+template <typename T, typename F>
+auto mbind(const std::optional<T>& opt, F f)
+  -> decltype(f(opt.value())) {
+    if(opt) {
+      return f(opt.value());
+    } else {
+      return {};
+    }
+}
+
+//이를 이용하면 위의 결과는
+std::optional<std::string> current_user_html() {
+  return mbind(
+      mbind(current_login, user_full_name),
+      to_html);
+}
+
+// 파이프로 바꾸면
+std::optional<std::string> current_user_html() {
+  return current | mbind(user_full_name)
+                 | mbind(to_html);
+}
+
+// 모나드로 expected<T,E>
+// expected 모나드 구성하면 오류가 무엇인지 알 수 있다.
+template<typename T, typename E, typname F,
+  typename Ret = typename std::result_of<F(T)>::type>
+Ret mbind(const expected<T,E>& exp, F f) {
+  if (!exp) {
+    return Ret::error(exp.error()); //exp에 오류가 있으면 전달한다.
+  }
+  retrun f(exp.value()); //그렇지 않으면 f가 반환한 결과를 반환한다.
+}
+
+// 사용해보자
+expected<std::string, int> user_full_name(const std::string& login);
+expected<std::string, int> to_html(const std::string& text);
+
+expected<std::string ,int> current_user_html() {
+  return current_login | mbind(user_full_name)
+                       | mbind(to_html);
+}
+
+// try 모나드
+// expected 모나드에 예외를 사용하는 래핑 함수
+template <typename F,
+         typename Ret = typename std::result_of<F()>::Type,
+         typename Exp = expected<Ret, std::exception_ptr>
+Exp mtry(F f) { //f는 인수를 갖지 않는 함수다. 인수로 호출하려면 람다를 전달하면 된다.
+  try {
+    return Exp::success(f()); // 예외가 전혀 던져지지 않았다면 f를 호출한 결과가 들어있는 expected 인스턴스를 반환한다.
+  }
+  catch (...) {
+    return Exp::error(std::current_exception()); // 예외가 던져진다면 예외에 대한 포인터가 있는 expected 인스턴스를 반환한다.
+  }
+}
+
+// result 값이 되거나 던져진 예외에 대한 포인터가 된다.
+auto result = mtry([=] {
+  auto users = system.users();
+
+  if (users.empty()) {
+    throw std::runtime_error("No users");
+  }
+
+  return users[0];
+});
+
+
+// 이밖에 try의 사용 대신 함수가 예외에 대한 포인터를 가진 expected 인스턴스를 반환한다면 다음과 같이 expected 객체에 저장된 값을
+// 반환하거나 보유한 예외를 던지는 함수를 만들 수 있다.
+template <typename T>
+T get_or_throw(const expected<T, std::exception_ptr>& exp) {
+  if (exp) {
+    return exp.value();
+  } else {
+    std::rethrow_exception(exp.error());
+  }
+}
+
+// 모나드로 상태 처리
+// 상태의 변경을 어떻게 처리할 것인가 
+// 순수하지 않은 함수는 상태를 암시적으로 변경할 수 있다.
+// 순수한 방법으로 상태를 변경하려면 모든 변경은 명시적으로 이루어져야한다.
+// 가장 간단한 방법은 각 함수에 일반 인수와 함께 현재 상태를 전달하는 것이다.
+// 즉 함수가 새로운 상태를 반환한다
+// ex.)
+template <typename T>
+class with_log {
+  public:
+    with_log(T value, std::string log = std::string())
+      : m_value(value)
+      , m_log(log) {}
+
+    T value() const {return m_value; }
+    std::string log() const {return m_log;} 
+  private:
+    T m_value;
+    std::string m_log;
+
+}
+
+with_log<std::string> user_full_name(const std::string& login);
+with_log<std::string> to_html(const std::string& text);
+
+// mbind로 로그 관리하기
+template <typename T, typenameF>
+typename Ret = typename std::result_of<F(T)>::type
+Ret mbind(const with_log<T>val, F f) {
+  // f를 사용해 주어진 값을 변환한다
+  // 이렇게 하면 결과값과 f가 생성한 로그 문자열이 만들어진다.
+  const auto result_with_log = f(val.value());
+  // 결과 값을 반환해야 하지만 f가 반환한 로그만 반환하면 안된다.
+  // 즉 이전 로그와 이 로그를 연결해야 한다.
+  return Ret(result_with_log.value(),
+      val.log() + result_with_log.log());
+}
+
+// 병행성과 연속 모나드 
+
