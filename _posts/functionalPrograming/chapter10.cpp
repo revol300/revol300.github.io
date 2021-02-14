@@ -302,4 +302,71 @@ Ret mbind(const with_log<T>val, F f) {
 }
 
 // 병행성과 연속 모나드 
+// 모나드에서 실제 값을 얻는 방법에 대해서는 다루지 않았다.
+// 하지만 vector, list, option에 getter가 있으므로 언제든지 값을 가져 올수 있다고 보면 되지 않을까?
+// 반례 : std::cin의 경우에는 filter, transform등의 적용이 가능하지만 사용자가 입력을 하기 전까지는 값을 얻을 수 없다
+// 그러면 이럴 때 값을 어떻게 얻을까?
+// 가장 쉬운 방법은 값을 얻을 때까지 기다리는 방법이지만 반응형 프로그램에서 프로그램이 정지하는건 바람직하다
+// 때문에 이러한 방법을 사용하기 보다는 입력값이 들어올 때 어떤 일을 할지를 알려주고, 실제 입력이 들어왔을 때 이를 수행하도록 하자
+// 즉 future<T>를 사용하자
 
+// 모나드로서의 퓨처
+// 일단 앞선 함수를 다시 재정의하자
+future<std::string> user_full_name(const std::string& login);
+future<std::string> to_html(const std::string& text);
+
+future<std::string> current_user_html() {
+  return current_user() | mbind(user_full_name)
+                        | mbind(to_html);
+}
+
+// mbind 함수는 퓨처가 언제 도착하는지 알아야하고, 변환 함수를 호출하고 최종 결과에 대한 핸들러를 가져올 수 있어야 한다.
+// 중요한 점은 최종 결과에 대한 핸들러를 즉시 제공해야 한다는 점이다.
+// 여기서 각 함수는 이전 함수에 의해 수행된 작업을 계속 수행한다
+// 따라서 mbind에 전달된 함수는 일반적으로 연속적이라고 부르며 정의한 퓨처 값 모나드는 연속 모나드 라고 한다.
+// 위 코드와 동일한 처리를 콜백함수나, signal, slot과 같은 방법을 이용하면 더 어렵다
+
+// 퓨처 구현
+// c++ 의 std::future의 문제점은 값을 얻는 유일한 방법인 get이 별로라는 점이다.
+// get은 값을 얻을 때까지 계속 폴링을 수행한다
+// 때문에 새로운 제안으로 then을 사용하자는 의견이 있고 이를 이용하는 것이 더 좋다 boost::future는 이를 지원한다
+
+// .then 멤버 함수를 사용한 mbind 구현
+template <typename T, typename F>
+auto mbind(const future<T>& future, F f) { // T에서 퓨처 인스턴스 future<T>로의 함수를 가진다
+    //future<T>에서 함수를 받아 future<T2>를 반환한다.
+    //f에 전달하기 전에 퓨처 객체로부터 값을 추출하기 위해 람다를 전달해야한다.
+    return future.then(
+        [](future<T> finished) {
+          //결과가 준비됐을 때만 (또는 예외가 발생한 경우) 연속 함수가 호출되기 때문에 아무것도 차단하지 않는다.
+          return f(finished.get());
+        });
+}
+
+// std 라이브러리 , boost 라이브러리 외에 Folly 라이브러리의 Future 클래스와 Qt의 QFuture도 사용을 고려해보자
+// Folly의 future.get은 값이 없다면 차단하는 대신에 예외를 던지도록 구현되어 있다
+// QFuture는 get이 차단을 수행하지만 다양한 추가기능을 지원한다
+
+// 모나드 결합
+// mbind가 너무 자주쓰이고 이때문에 장황하다
+M<std::string> user_full_name(const std::string& login);
+M<std::string> to_html(const std::string& text);
+
+M<std::string> user_html(const M<std::string>& login) {
+  return mbind(
+      mbind(login, user_full_name),
+      to_html);
+}
+
+// 두 모나두 함수의 병합을 정의
+template <typename F, typename G>
+auto mcompose(F f, G g) {
+  return [=](auto value) {
+    return mbind(f(value), g);
+  }
+}
+
+//그러면
+auto user_utml = mcompose(user_full_name, to_html);
+
+// https://forums.manning.com/posts/list/43779.page 참조
