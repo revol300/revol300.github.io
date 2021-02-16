@@ -80,4 +80,58 @@ private:
   }
 
   tcp::acceptor m_acceptor;
+  tcp::socket m_socket;
+  std::function<void(std::string&&)> m_emit;
 };
+
+// 위 코드에 대해서 요약하면
+// m_acceptor.async_accept는 새로운 클라이언트가 나타날 때 실행되도록 전달된 람다를 스케줄한다.
+// 람다는 클라이언트가 성공적으로 연결됐는지 확인한다. 그렇다면 클라이언트에 대한 새로운 세션을 만든다.
+// 여러 클라이언트를 받아들일 수 있기를 원하면 do_accept를 다시 호출한다.
+
+// 세션 객체는 자신의 수명을 관리해야한다. 오류가 발생하면 세션은 즉시 자신을 파기해야한다.
+// 이를 위해 enable_shared_from_this를 사용한다
+
+// 메시지 읽기와 내보내기
+tempalte <typename EmitFunction>
+class session: public std::enable_shared_from_this<session<EmitFunction>> {
+  public:
+    session(tcp::socket&& socket, EmitFunction emit)
+      : m_socket(std::move(socket))
+      , m_emit(emit) {}
+
+    void start() {
+      do_read();
+    }
+
+  private:
+    // 이 세션의 소유권을 공유하는 다른 포인터를 만든다.
+    using shared_session = 
+      std::enable_shared_from_this<session<EmitFunction>>;
+
+    void do_read() {
+      auto self = shared_session::shared_from_this();
+
+      boost::asio::async_read_until(
+          m_socket, m_data, '\n', // 입력에서 개행 문자에 도달할 때 실행될 람다를 스케줄 한다.
+          [this, self](const error_code& error,
+            std::size_t size){
+
+            if(!error) {
+              std::istream is(&m_data);
+              std::string line;
+              std::getline(is, line);
+              m_emit(std::move(line));
+              do_read();
+            }
+
+          });
+    }
+
+    tcp::socket m_socket;
+    boost::asio::streambuf m_data;
+    EmitFunction m_emit;
+};
+
+// 반응형 스트림을 모나드로 모델링
+
