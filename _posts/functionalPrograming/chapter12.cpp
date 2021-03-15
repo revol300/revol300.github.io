@@ -348,4 +348,217 @@ namespace detail{
 }
 
 // 반응형 스트림 필터링
+// filter를 만들어보자
+// 스트림에서 메시지를 필터링하는 변환 액터
+template <typename Sender,
+  typename Predicate,
+  // 보내는 메시지와 동일한 유형의 메시지를 받는다.
+  typename MessageType =
+    typename Sender::value_type>
+class filter_impl {
+public:
+  using value_type = MessageType;
 
+  ...
+
+  void prcess_message(MessageType&& message) const {
+    if(std::invoke(m_predicate, message)) {
+      m_emit(std::move(message));
+    }
+  }
+
+private:
+  Sender m_sender;
+  Predicate m_predicate;
+  std::function<void(MessageType&&)> m_emit;
+};
+
+// 다음과 같은 사용이 가능하다
+auto pipeline =
+  service(event_loop)
+  | transform(trim)
+  | filter([](const std::string& message) {
+    return message.length() > 0 &&
+    message[0] != '#';
+    })
+  | sink_to_cerr;
+
+// 반응형 스트림에서의 오류처리
+// 문자열을 JSON 객체로 파싱하기 expected<T,E>를 사용하자
+auto pipeline =
+  service(event_loop)
+  | transform(trim)
+  | filter([](const std::string& message) {
+      return message.length() > 0 &&
+        message[0] != '#';
+    })
+  | transform([](const std::string& message) {
+    return mtry([&] {
+        return json::parse(message);
+      });
+    })
+  | sink_to_cerr;
+
+// 북마크의 URL과 텍스트를 보관하는 구조체를 정의하고 JSON 객체를 받아서 이 객체에 필요한 데이터가 있다면 북마크를 제공하고 그렇지 않다면 오류를 제공하는 함수를 만든다.
+struct bookmark_t {
+  std::string url;
+  std::string text;
+};
+
+using expected_bookmark = expected<bookmark_t, std::exception_ptr>;
+
+exepcted_bookmark bookmark_from_json(const json& data) {
+  return mtry([&]{
+    return bookmark_t{data.at("FirstURL"), data.at("Text")};  
+  })
+}
+
+// 유효한 값 만을 사용해야 하므로
+auto pipeline = 
+  service(event_loop)
+  | transform(trim)
+  | filter(...)
+
+  // 유효한 JSON 객체만을 구한다.
+  | transform([](const std::string& message) {
+      return mtry([&] {
+        return json::parse(message);
+      });
+    })
+  | filter(&expected_json::is_valid)
+  | transform(&expected_json::get)
+
+  //유효한 북만크만을 구한다.
+  | transform(bookmark_from_json)
+  | filter(&expected_bookmark::is_valid)
+  | transform(&expected_bookmark::get)
+  | sink_to_cerr;
+
+// 이방식은 에러를 잃어버리고 장황하다. 모나드를 써서 장황함을 없애보자.
+// expected를 모나드로 처리하기
+auto pipeline = 
+  service(event_loop)
+  | transform(trim)
+  | filter(...)
+
+  // 이지점까지는 정상 값의 스트림을 가진다.
+  // 여기서 expected 인스턴스의 스트림을 얻게 된다.
+  // 즉, 모내드 내의 모나드다.
+  | transform([](const std::string& message) {
+      return mtry([&] {
+        return json::parse(message);
+      });
+    })
+
+  // expected 인스턴스를 변환하기 위해 mbind를 사용할 수 있다면 expected 객체의 스트림에 대해 작업을 하기 위해 transform을 사용해 이를 리프팅시킬 수 있다.
+  | transform([](const auto& exp_json) {
+      return mbind(exp_json, bookmark_from_json);
+    })
+
+  // 원하는 만큼의 많은 수의 변환(오류가 발생할 수 있는)을 연결할 수 있다.
+
+  ...
+
+  | sink_to_cerr;
+
+// 클라이언트에 응답
+// 메시지와 같이 소켓을 보유하는 구조체
+template <typename MessageType>
+struct with_client {
+  MessageType value;
+  tcp::socket* socket;
+
+  void reply(const std::string& message) const {
+    //async_write가 비동기 도장을 마칠 때까지
+    //메시지를 복사해 보관한다.
+    auto sptr = std::make_shared<std::string>(message);
+    boost::asio::async_write(
+      *socket,
+      boost::asio::buffer(*sptr, sptr->length()),
+      [sptr](auto, auto){});
+  }
+
+};
+
+//일반 문자열 대신에 with_client<std::string>을 사용
+auto pipeline =
+  service(event_loop)
+  ...
+  | sink([](const auto& message) {
+      const auto exp_bookmark = message.value;
+
+      if(!exp_bookmark) {
+        message.reply("ERROR: Request not understood\n");
+        return;
+      }
+
+      if(exp_bookmark->text.find("C++") != std::string::npos) {
+        message.reply("OK: " + to_string(exp_bookmark.get()) + "\n");
+      } else {
+        message.reply("ERROR: NOT a C++ related link\n");
+      }
+    });
+
+//위의 내용도 mbind를 이용할 수 있다. 
+//reactive::operators 네임스페이스에 존재하는 반응형 스트림 용도로 구현된 transform과 filter를 with_client 값의 반응형 스트림에 동작하도록 다음과 같이 재정의하기를 원한다.
+
+auto transform = [](auto f) {
+  return reactive::operators::transform(lift_with_client(f));
+};
+
+auto filter = [](auto f) {
+  return reactive::operators::filter(apply_with_client(f));
+};
+
+// lift_with_client는 T1에서 T2로의 모든 함수를 with_client<T1>에서 with_client<T2>로의 함수로 리프트하는 간단한 함수다.
+// apply_with_client는 비슷한 일을 하지만 래핑되지 않은 결과 값을 with_client 객체에 두는 대신 반환한다.
+
+// 이를 이용하면 변경없이 서버의 최종 버전이 완성된다. example:bookmark-service-with-reply/main.cpp에서 이용 가능하다.
+// 서버의 최종 버전
+auto transform = [](auto f) {
+  return reactive::operators::transform(lift_with_client(f));
+};
+auto filter = [](auto f) {
+  return reactive::operators::filter(apply_with_client(f)):
+};
+
+boost::asio::io_service event_loop;
+
+auto pipeline =
+  service(event_loop)
+  | transform(trim)
+
+  | filter([](const std::string& message) {
+      return message.length() > 0 && message[0] != '#';
+    })
+
+  | transform([](const std::string& message) {
+      return mtry([&]{ return json::parse(message); });
+    })
+
+  | transform([](const auto& exp) {
+      return mbind(exp, bookmark_from_json);
+    })
+
+  | sink([](const auto& message) {
+      const auto exp_bookmark = message.value;
+      if(!exp_bookmark) {
+        message.reply("ERROR: Request not understood\n");
+        return;
+      }
+
+      if(exp_bookmark->text.find("C++") != std::string::npos) {
+        message.reply("OK: " + to_string(exp_bookmark.get()) + "\n");
+      } else {
+        message.reply("ERROR: Not a C++-related link\n");
+      }
+    });
+
+std::cerr << "Service is running... \n";
+event_loop.run();
+
+// 가변 상태로 액터 만들기
+// 이미 join 로직에서 가변 상태가 사용됨. 단일 스레드에서 돌고 동기화가 필요없다면 가변상태여도 괜찮다.
+
+// 액터로 분산 시스템 작성
+// 액터는 독립적이므로 이미 분산시스템이다. 문제는 메시지 전달 시스템으로 멀티스레드 실행인 경우 각 스레드에 메시지 처리 루프를 만들고 올바른 메시지를 적절한 루프에 전달해 올바른 액터로 전달하는 방법을 알아야 한다.
