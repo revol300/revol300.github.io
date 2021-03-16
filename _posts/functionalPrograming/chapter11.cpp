@@ -171,3 +171,67 @@ auto sum(const C& collection) {
 
 // 커리 함수 만들기
 
+// 4장의 예제
+void print_person(const person_t& person, std::ostream& out, person_t::output_format_t format);
+
+// 커리 버전
+auto print_person_cd(const person_t& person) {
+  return [&](std::ostream& out) {
+    return [&](person_t::output_format_t format) {
+      print_person(person, out, format);
+    };
+  };
+}
+
+print_person_cd(martha)(std::cout)(person_t::full_name);
+
+// 이를 좀더 사용하기 쉽게 변환
+template <typename Function, typename... CapturedArgs>
+class curried{
+  private:
+    using CapturedArgsTuple = std::tuple<
+      std::decay_t<CapturedArgs>...>;
+
+    template<typename... Args>
+    static auto capture_by_copy(Args&&... args) {
+      return std::tuple<std::decay_t<Args>...>(
+        std::forward<Args>(args)...);
+    }
+
+  public:
+    curried(Function, CapturedArgs...args)
+      : m_function(function)
+      , m_captured(capture_by_copy(std::move(args)...)) {}
+
+    curried(Function, std::tuple<CaptureArgs...> args)
+      : m_function(function)
+      , m_captured(std::move(args)) {}
+
+    ...
+ private:
+  Function m_function;
+  std::tuple<CapturedArgs...> m_captured;
+}
+
+// 이제 이 클래스를 함수 객체로 바꾸자
+// 호출 연산자는 다음의 두 가지 경우를 처리해야한다
+// 사용자가 원래 함수를 호출하기 위한 나머지 모든 인수를 제공한 경우 함수를 호출하고 결과를 반납한다.
+// 함수를 호출하기 위한 모든 인수가 아직 없는 경우 새로운 커리 함수 객체를 반환한다.
+
+// Function을 호출할 수 있는지를 다음과 같이 확인할 수 있다.
+std::is_invocable_v<Function, CapturedArgs...>
+
+template <typename... NewArgs>
+auto operator()(NewArgs&&... args) const {
+  auto new_args = capture_by_copy(std::forward<NewArgs>(args)...);
+  
+  if constexpr(std::is_invocable_v<Function, CaptureArgs... NewArgs...> {
+    ...
+  } else {
+    ...
+  }
+}
+
+// 모든 호출 가능한 것을 호출
+
+
