@@ -113,4 +113,61 @@ R sum_collection(const C& collection) {
 }
 
 // 컴파일 시점에 유형 속성 검사
+template <typename...>
+using void_t = void;
+
+// void_t는 컴파일 시점에 SFINAE 컨텍스트에서 주어진 형식이나 표현의 유효성을 검사할 수 있게 해주므로 유용하다.
+// 그냥 컴파일 타임에서 유효성 검증을 위해 사용
+
+// 유형이 중첩된 value_type을 갖는지 탐지하는 메타함수
+
+// 일반적인 경우 : 임의의 유형에 중첩된 value_type 유형 정의가 없다고 가정한다.
+template <typename C,
+          typename = void_t<>>
+struct has_value_type
+      : std::false_type {};
+
+// 특수한 경우 : typename C::value_type이 기존 유형인 경우에만 고려한다(C가 중첩된 value_type을 갖는 경우)
+template <typename C>
+struct has_value_type<C,
+        void_t<typename C::value_type>>
+        : std::true_type {};
+
+template <typename C>
+auto sum(const C& collection) {
+  if constexpr (has_value_type<C>()) {
+    return sum_collection(collection);
+  } else {
+    return sum_iterable(collection);
+  }
+}
+
+// constexpr-if를 사용함으로써 두 분기점 중에 사용되는 코드만 컴파일한다.
+
+// 유형이 반복 가능한지를 탐지하는 메타함수
+
+// 일반적인 경우: 임의의 유형이 반복 가능하지 않다고 가정한다.
+template <typename C,
+          typename = void_t<>>
+struct is_iterable : std::false_type{};
+
+// 특수한 경우 : C가 반복만 가능하고 begin 반복자가 역참조될 수 있는 경우를 고려한다.
+template <typename C>
+struct is_iterable<
+  C, void_t<decltype(*begin(std::declval<C>())),
+            decltype(end(std::declval<C>()))>>
+  : std::true_type{};
+
+template <typename C>
+auto sum(const C& collection) {
+  if constexpr (has_value_type<C>()) {
+    return sum_collection(collection);
+  } else if constexpr (is_iterable<C>()) {
+    return sum_iterable(collection);
+  } else {
+    // 아무것도 하지 않음
+  }
+}
+
+// 커리 함수 만들기
 
