@@ -233,5 +233,179 @@ auto operator()(NewArgs&&... args) const {
 }
 
 // 모든 호출 가능한 것을 호출
+// 함수 호출을 위해 invoke를 사용
+std::less<>(12,14) => std::invoke(std::less<>, 12, 14)
+fmin(42,6) => std::invoke(fmin, 42, 6)
+martha.name() => std::invoke(&person_t::name, martha)
+pair.first => std::invoke(&pair<int,int>::first,pair)
+
+// 이와 비슷한 std::apply를 사옹하자
+// curried 클래스의 완전한 구현
+template <typename Function, typename.. CapturedArgs>
+class curried {
+private:
+  using CapturedArgsTuple =
+    std::tuple<std::decay_t<CapturedArgs>...>;
+
+  template <typename... Args>
+  static auto capture_by_copy(Args&&... args) {
+    return std::tuple<std::decay_t<Args>...>(
+      std::forward<Args>(args)...);
+  }
+
+public:
+  curried(Function function, CaptureArgs... args)
+  : m_function(function)
+  , m_captured(capture_by_copy(std::move(args)...)) {}
+
+  curried(Function function, std::tuple<CapturedArgs...> args)
+  : m_function(function)
+  , m_captured(std::move(args))
+
+  template <typename... NewArgs>
+  auto operator()(NewArgs&&... args) const {
+    // 새 인수에서 튜플을 만든다
+    auto new_args = capture_by_copy(
+      std::forward<NewArgs>(args)...);
+
+    auto all_args = std::tuple_cat(
+      m_captured, std::move(new_args));
+
+    if constexpr(std::is_invocable_v<Function,
+      CapturedArgs..., NewArgs...>) {
+      return std::apply(m_function, all_args);
+    } else {
+      return curried<Function,
+             CapturedArgs...,
+             NewArgs...>(
+             m_function, all_args);
+    }
+  }
+
+private:
+  Function m_function;
+  std::tuple<CapturedArgs...> m_captured;
+};
+
+// 이제 print_person의 커리 버전을 다음과 같이 쉽게 만들 수 있다.
+auto print_person_cd = curried{print_person};
+
+print_person_cd(std::cref(martha))(std::ref(std::cout))(person_t::name_only);
+
+// DSL(domain-specific language) 구축 블록
+
+with(martha)(
+  name = "Martha",
+  surname = "Jones",
+  age = 42
+);
+
+// 위 코드에 대한 고찰
+// with로 불리는 함수(또는 유형)가 있다.  이것은 martha라는 인수로 호출하고 있기 때문에 함수라는 것을 알 수 있다.
+// 이 호출의 결과는 임의의 수의 인수를 받는 또 다른 함수다. 동시에 좀 더 많은 필드를 업데이트해야 할 수도 있다.
+
+template <typename Member>
+struct field {
+  field(Member member)
+  : member(member) {}
+
+  Member member;
+};
+
+template <typename Member, typename Value>
+struct update {
+  update(Member member, Value value)
+    : member(member)
+    , value(value) {}
+
+  Member member;
+  Value value;
+};
+
+template <typename Member>
+struct field {
+  ...
+  template <typename Value>
+  update<Member, Value> operator=(const Value& value) const {
+    return update{member, value};
+  }
+};
+
+template <typename Record>
+class transaction {
+public:
+  transaction(Record& record)
+  : m_record(record) {}
+
+  template <typename... Updates>
+  bool operator()(Updates... updates) {
+    ...
+  }
+
+private:
+  Record& m_record;
+};
+
+template <typename Record>
+auto with(Record& record) {
+  return transaction(record);
+}
+
+// transaction 호출 연산자 구현
+template <typename Record>
+class transaction {
+public:
+  transaction(Record& record)
+  : m_record(record) {}
+
+  template <typename... Updates>
+  bool operator()(Updates... updates) {
+    //업데이트를 수행할 임시 복사본을 만든다.
+    auto temp = m_record;
+    // 모든 업데이트를 적용한다. 모든 업데이트가 성공하면 임시 복사본을 원본 레코드와 교환하고 true를 반환한다.
+    if (all(updates(temp)...)) {
+      std::swap(m_record, temp);
+      return true;
+    }
+    return false;
+  }
+private:
+  // 다른 업데이트의 모든 결과를 수집하고 이들 작업이 모두 성공하면 true를 반환한다.
+  template <typename... Updates>
+  bool all(Updates... results) const {
+    return (... && results);
+  }
+
+  Record &m_record;
+}
+
+// update 구조체의 완전한 구현
+template <typename Member, typename Value>
+struct update {
+  update(Member member, Value value)
+  : member(member)
+  , value(value) {}
+
+  template <typename Record>
+  bool operator()(Record& record) {
+    if constexpr (std::is_invocable_r<
+      bool, Member, Record, Value>()) {
+      // Member 호출 가능 객체에 레코드와 새 값을 전달할 때 이것이 bool을 반환하면 실패할 수도 있는 세터 함수를 가질 수 있다.
+      return std::invoke(member, record, value);
+    } else if constexpr (std::is_invocable<
+      Member, Record, Value>()) {
+      // 결과 유형이 bool이 아니거나 bool로 변환 불가능하다면 세터 함수를 호출하고 true를 반환한다.
+      std::invoke(member, record, value);
+      return true;
+    } else {
+      // 멤버 변수에 대한 포인터가 있으면 변수를 설정하고 true를 반환한다.
+      std::invoke(member, record) = value;
+      return true;
+    }
+  }
+
+  Member member;
+  Value value;
+};
 
 
