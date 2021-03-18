@@ -21,5 +21,3 @@ CABAC은 arithmetic coding을 기반으로 video encoding 표준의 필요에 �
 - 양자화 된 확률 범위 및 확률 상태를 사용하여 곱셈없는 범위 분할을 사용 
 
 ![CABAC](/assets/img/postImages/CABAC.png)
-
-
