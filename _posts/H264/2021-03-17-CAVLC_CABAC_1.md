@@ -8,8 +8,11 @@ categories: multimedia
 tag:
 - multimedia 
 ---
+
 #Introduction
+
 H.264에서는 코덱 사용목적에 따라 프로파일을 나누고, 어떤 프로파일을 사용하는지에 따라 다른 방법을 통해 encoding 및 decoding을 지원한다. 특히 그중에 차이를 보이는 점이 메크로블록의 DCT coefficient를 압축하는 과정이다. 아래의 table에 적힌 대부분의 parameter의 경우에는 Exponential Golomb이라 불리는 기본적인 부화하 방법이 사용된다. 이중 노ㅠ은 부호화 효율이 요구되는 DCT 계수 (Residual data)에 대해서는 프로파일의 종류에 따라 CAVLC(Context-adaptive variable-length coding) 혹은 CABAC(Context-adaptive binary arithmetic coding)을 이용한다. 간단히 장단을 비교하자면 CAVLC는 압축효율이 좀 떨어지지만 연산량이 적고 CABAC의 경우에는 연산량이 많지만 압축효율이 좋다. 그러한 연유로 자연스레 컴퓨터의 성능이 좋아지면서 H.265에서는 둘중에 하나를 선택하는 것이 아닌 CABAC을 사용한다고 한다. 이번 글에서는 DCT 계수를 제외한 나머지 element에 대해서 주로 사용되는 Exp-Golomb과 비교적 적은 연산을 요하는 CAVLC에 대해서 중점적으로 써보고자한다.
+
 | Parameters                                          | Description                                                           |
 |-----------------------------------------------------|-----------------------------------------------------------------------|
 | Sequence-, picture- and slice-layer syntax elements |                                                                       |
@@ -21,6 +24,7 @@ H.264에서는 코덱 사용목적에 따라 프로파일을 나누고, 어떤 �
 | Residual data                                       | Coefficient data for each 4x4 or 2x2 block                            |
 
 # Exp-Golomb entropy coding
+
 Exp-Golomb은 다음과 같은 표현식으로 요약할 수 있다.
 [M zeros]1[INFO]
 
@@ -99,6 +103,7 @@ Exp-Golomb은 다음과 같은 표현식으로 요약할 수 있다.
 ...
 
 # CAVLC (Context-adaptive variable-length coding)
+
 다음 [링크](https://web.archive.org/web/20090126164755/http://vcodex.com/files/h264_vlc.pdf)를 참고했다.
 CAVLC는 entropy_coding_mode 가 0으로 설정되어 있을 때 DCT 계수를 부호화하는데 사용된다.
 DCT 계수에는 다음과 같은 특징이 있다.
@@ -110,6 +115,7 @@ DCT 계수에는 다음과 같은 특징이 있다.
 이 같은 특징을 바탕으로 CAVLC가 구성되었으며 다음과 같은 과정으로 DCT 계수가 부호화 된다.
 
 ## coeff_token : 0이 아닌 계수의 총 수 (TotalCoeffs) 와 TrailingOnes(연속하는 절대값 1인 계수의 개수)를 인코딩한다. 
+
 이 과정에서 TotalCoeffs는 4x4기준으로 0에서 16사이의 값을 가진다. TrailingOnes(T1)은  0에서 3까지의 값이 가능하며 연속하는 +/-1 의 개수가 3보다 많다면 마지막 3개만을 TrailingOnes로 취급하고 나머지는 다른 계수와 동일하게 취급한다. TotalCoeffs와 TrailingOnes는 추후 VLC table에 사용된다. VLC table은 Num-VLC0, Num-VLC1, Num-VLC2 그리고 Num-FLC가 있다. 이중 어떤 VLC table을 사용하는지는 인접한 매크로 블록의 TotalCoeffs에 따라 달라진다. 일반적으로 좌측 블록의 TotalCoeffs \[Left_Total_coeffs_num\]와 상단 블록의 TotalCoeffs \[Upper_Total_coeffs_num\]의 평균값\[N = Round((Left_total_coeffs_num + Upper_total_coeffs_num)/2)\]에 따라 결정된다. 만약 좌측 블록이나 상단 블록이 없다면 Num-VLC0를 사용한다.
 
 | N           | Table for coeff token |
@@ -120,9 +126,11 @@ DCT 계수에는 다음과 같은 특징이 있다.
 | 8 or above  | FLC                   |
 
 ## TrailingOnes 값에 대한 부호 값을 저장
+
 최대 3개의 TrailingOnes에 대해 부호 값을 저장한다
 
 ## 남은 0이 아닌 coefficient 값에 대해 encoding 을 수행
+
 이제 남은 coefficient 값에 대해서 encodig 을 수행한다. encoding 은 Level_VLC0 ~ Level_VLC6의 7개의 테이블을 참조하여 이루어지며 끝에 있는 coefficient부터 다음과 같은 방식으로 이루어진다.
 Level_VLC 테이블은 다음 [링크](https://patentimages.storage.googleapis.com/8a/41/24/180e26a06896c6/KR20070069381A.pdf)의 도면3을 참고하면 된다
 
@@ -160,7 +168,6 @@ VLC 테이블의 threshold
 
 왼쪽이나 위에 블록이 없다고 가정하면 여기서 사용되는 table은 Num-VLC0가 된다. 전체  coefficient의 개수가 5개 TrailingOnes는 4이지만 3개까지만 가능하므로 TotalCoeffs=5, TrailingOnew=3이 된다. 이에 해당하는 값을 Num-VLC0에서 찾으면 000100이 된다.
 
-
 ### TrailingOnes 값에 대한 부호 값을 저장
 
 | Element       | Value                         | Code                               |
@@ -186,6 +193,7 @@ VLC 테이블의 threshold
 이제 남은 coefficient 인 3, 1을 Ecoding한다. 1은 VLC0를 사용하지만 3은 threshold를 넘으므로  VLC1을 사용한다
 
 ### 마지막 coefficient 전의 0의 개수를 Encoding
+
 | Element       | Value                         | Code                               |
 |---------------|-------------------------------|------------------------------------|
 | coeff_Token   | TotalCoeffs=5, TrailingOnes=3 | 0000100                            |
@@ -204,6 +212,7 @@ VLC 테이블의 threshold
 coefficient가 있는 1까지 쓰면 0, 3, 0, 1, -1, -1, 0, 1. 여기서 0의 총 개수는 3이다. 0을 빼고 다시 쓰면 3, 1, -1, -1, 1이고 각 coefficient 앞의 0의 개수는 3: 1개, 1: 1개, -1: 0개, -1: 0개, 1: 1개로, 11001이되며 끝에서부터 Encoding되고 맨 앞의 값이 없어도 TotalZeros로 알수 있으므로 1개, 0개, 0개, 1개를 Code화
 
 ## Decoding
+
 | Element       | Value                         | Code                               |
 |---------------|-------------------------------|------------------------------------|
 | coeff_Token   | TotalCoeffs=, TrailingOnes=   | 0000100                            |
