@@ -9,7 +9,7 @@ tag:
 - multimedia 
 ---
 
-#Introduction
+# Introduction
 
 H.264에서는 코덱 사용목적에 따라 프로파일을 나누고, 어떤 프로파일을 사용하는지에 따라 다른 방법을 통해 encoding 및 decoding을 지원한다. 특히 그중에 차이를 보이는 점이 메크로블록의 DCT coefficient를 압축하는 과정이다. 아래의 table에 적힌 대부분의 parameter의 경우에는 Exponential Golomb이라 불리는 기본적인 부화하 방법이 사용된다. 이중 노ㅠ은 부호화 효율이 요구되는 DCT 계수 (Residual data)에 대해서는 프로파일의 종류에 따라 CAVLC(Context-adaptive variable-length coding) 혹은 CABAC(Context-adaptive binary arithmetic coding)을 이용한다. 간단히 장단을 비교하자면 CAVLC는 압축효율이 좀 떨어지지만 연산량이 적고 CABAC의 경우에는 연산량이 많지만 압축효율이 좋다. 그러한 연유로 자연스레 컴퓨터의 성능이 좋아지면서 H.265에서는 둘중에 하나를 선택하는 것이 아닌 CABAC을 사용한다고 한다. 이번 글에서는 DCT 계수를 제외한 나머지 element에 대해서 주로 사용되는 Exp-Golomb과 비교적 적은 연산을 요하는 CAVLC에 대해서 중점적으로 써보고자한다.
 
