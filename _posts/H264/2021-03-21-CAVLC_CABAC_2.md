@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "CABAC vs CAVLC (1)"
-date:   2021-03-17
+title:  "CABAC vs CAVLC (2)"
+date:   2021-03-21
 comments: true
 excerpt: CABAC 
 categories: multimedia
