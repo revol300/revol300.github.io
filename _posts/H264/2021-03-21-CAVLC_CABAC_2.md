@@ -10,9 +10,11 @@ tag:
 ---
 
 # CABAC (Context-adatpvie binary arithmetic coding)
+
 H.264/MPEG-4 AVC의 특정 프로파일 및 HEVC에서 사용되는 표준으로 엔트로피 인코딩의 한 종류 이다. 가역 압축 기술의 하나로 CAVLC보다 높은 압축 효율을 보여주지만 parallelize와 vectorize가 어렵다.
 
 ## Algorithm
+
 CABAC은 arithmetic coding을 기반으로 video encoding 표준의 필요에 의해 몇가지 변화와 발전이 있다.
 - binary symbol을 encoding 함으로써 complexity 낮게 유지하고 모든 기호에서 자주 사용되는 비트에 대한 확률 모델링을 허용
 
@@ -21,3 +23,24 @@ CABAC은 arithmetic coding을 기반으로 video encoding 표준의 필요에 �
 - 양자화 된 확률 범위 및 확률 상태를 사용하여 곱셈없는 범위 분할을 사용 
 
 ![CABAC](/assets/img/postImages/CABAC.png)
+
+## Steps
+
+위 그림에 대해 크게 세부분으로 나누면 아래와 같다.
+- Binarization : 전체 input중 non-binary값은 binary 형태로 변환
+- Context modeling : binary code 에 대해서 context modeling 이라고 부르는 확률 모델 선택 과정이 진행
+- Binary arithmetic coding : 이밖에 일 부 bin에 대해서는 bypass coding mode가 사용되어 context modeling 과정을 빼서 encoding 속도를 향상시킨다.  
+
+### Binarization
+#### General Approach
+
+context moeling 과 adaptive arithmetic coding을 적용하려면 다음과 같은 조건이 필요하다.
+
+- 빠르고 정확한 conditional probabilities 예측이 slice coding unit 정도 되는 비교적 빠른 시간 안에 이루어져야한다.
+- probability estimation, arithmetic coding과 관련된 computational complexity가 최소로 유지되어 충분히 높은 throughput을 감당할 수 있어야 한다.
+
+그냥 간단히 영상을 재생함에 있어서서 지장을 주지 않기 위해 빠른 속도를 가져야한다.
+
+bin string 이라 불리는 binary sequence에 맞춰 non-binary 값을 binary 형태로 변환 bybass coding mode
+
+
