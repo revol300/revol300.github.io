@@ -266,12 +266,6 @@ sign 값을 이용하여 부호를 알아낼 수 있다.
 | sign          | -                             | 1                                  |
 | Coefficient   | +1 (use Level_VLC0)           | 1(prefix)                          |
 | Coefficient   | +3 (use Level_VLC1)           | 001(prefix) 0(suffix)              |
-| TotalZeros    | 3                             | 111                                |
-| run_before(4) | ZerosLeft=3; run_before=1     | 10                                 |
-| run_before(3) | ZerosLeft=2; run_before=0     | 1                                  |
-| run_before(2) | ZerosLeft=2; run_before=0     | 1                                  |
-| run_before(1) | ZerosLeft=2; run_before=1     | 01                                 |
-| run_before(0) | ZerosLeft=1; run_before=1     | No code required; last coefficient |
 
 나머지 코드를 통해 남은 Coefficient값을 적어준다.
 
