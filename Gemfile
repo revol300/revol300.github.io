@@ -5,3 +5,5 @@ gem "jekyll-sitemap"
 gem "jekyll-gist"
 gem 'jekyll-mentions'
 gem 'jekyll-feed'
+gem "addressable", ">= 2.8.0"
+gem "kramdown", ">= 2.3.1"
